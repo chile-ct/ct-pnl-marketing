@@ -763,7 +763,7 @@ const TAB_BUDGET=()=>{
         <Card>
           <ChartTitle sub="Col E in FC sheet">By Contract Type</ChartTitle>
           <ResponsiveContainer width="100%" height={150}>
-            <PieChart><Pie data={contractData} dataKey="value" cx="50%" cy="50%" outerRadius={55} innerRadius={32} label={({name,percent})=>`${name} ${(percent*100).toFixed(0)}%`} labelLine={false}>
+            <PieChart><Pie data={contractData} dataKey="value" cx="50%" cy="50%" outerRadius={55} innerRadius={32} label={({name,percent}:any)=>`${name} ${((percent||0)*100).toFixed(0)}%`} labelLine={false}>
               <Cell fill="#6366f1"/><Cell fill="#10b981"/>
             </Pie><Tooltip formatter={(v:any,n:any)=>[`${Math.round(v).toLocaleString("vi-VN")} M ₫`,n]}/></PieChart>
           </ResponsiveContainer>
@@ -771,7 +771,7 @@ const TAB_BUDGET=()=>{
         <Card>
           <ChartTitle sub="Col F in FC sheet">By Cost Type</ChartTitle>
           <ResponsiveContainer width="100%" height={150}>
-            <PieChart><Pie data={costTypeData} dataKey="value" cx="50%" cy="50%" outerRadius={55} innerRadius={32} label={({name,percent})=>`${name} ${(percent*100).toFixed(0)}%`} labelLine={false}>
+            <PieChart><Pie data={costTypeData} dataKey="value" cx="50%" cy="50%" outerRadius={55} innerRadius={32} label={({name,percent}:any)=>`${name} ${((percent||0)*100).toFixed(0)}%`} labelLine={false}>
               <Cell fill="#ec4899"/><Cell fill="#94a3b8"/>
             </Pie><Tooltip formatter={(v:any,n:any)=>[`${Math.round(v).toLocaleString("vi-VN")} M ₫`,n]}/></PieChart>
           </ResponsiveContainer>
