@@ -93,79 +93,51 @@ const FREELANCERS = [
 // NOTE: M4/M5/M6 data only available for Jan cohort (oldest); Feb+ still maturing
 // Lifespan 6M means: LTV formula uses 6 months of revenue attribution per user
 // M4–M6 in cohort table directly validates this assumption; currently Jan cohort shows ~25% still active at M5
-// ⚠️ COHORT DATA STATUS:
-// Retention % values (M1/M2/M3/M4/M5) are from BQ user_retention table — real.
-// M0a (cohort size = new users acquired that month) needs BQ query:
-//   SELECT COUNT(DISTINCT user_id), vertical_id, DATE_TRUNC(first_active_date, MONTH) as cohort_month
-//   FROM `{project}.{dataset}.user_activity` GROUP BY 2,3
-// Until that query runs, M0a is derived: (vMAU × 3% NUR) per month from MTM data.
-// "ALL" cohort = BQ query on ALL users regardless of vertical (deduplicated) — pending.
-// NOTE: Jan/Feb/Mar having same M0a was a data error — now computed from MTM.
-const _mkCohort=(vert:"PTY"|"JOB"|"VEH"|"GDS", mauK:number[], rets:{m:string,M1:number|null,M1r:number|null,M2:number|null,M2r:number|null,M3:number|null,M3r:number|null,M4:number|null,M4r:number|null,M5:number|null,M5r:number|null}[])=>
-  rets.map((r,i)=>{
-    const m0a=Math.round((mauK[i]||0)*1000*0.03); // 3% NUR of vMAU
-    return {c:r.m, M0:100, M0a:m0a,
-      M1:r.M1, M1a:r.M1!=null&&r.M1r!=null?Math.round(r.M1r):r.M1!=null?Math.round(m0a*r.M1/100):null,
-      M2:r.M2, M2a:r.M2!=null&&r.M2r!=null?Math.round(r.M2r):r.M2!=null?Math.round(m0a*r.M2/100):null,
-      M3:r.M3, M3a:r.M3!=null&&r.M3r!=null?Math.round(r.M3r):r.M3!=null?Math.round(m0a*r.M3/100):null,
-      M4:r.M4, M4a:r.M4!=null&&r.M4r!=null?Math.round(r.M4r):r.M4!=null?Math.round(m0a*r.M4/100):null,
-      M5:r.M5, M5a:r.M5!=null&&r.M5r!=null?Math.round(r.M5r):r.M5!=null?Math.round(m0a*r.M5/100):null,
-    };
-  });
-
-// vMAU per vertical Jan-May [Jan,Feb,Mar,Apr,May] in thousands (from MTM sheet)
-const _ptymau=[1377,850,1855,1566,1566];
-const _jobmau=[816,746,995,756,880];
-const _vehmau=[1490,1463,1905,1839,1918];
-const _gdsmau=[1914,1733,2518,2277,2350];
-
+// ✅ COHORT DATA: chotot-dwh.ct_digital.dashboard__retention_mapping_activation_by_source_campaign
+// Query: COUNTIF(mN>0)/COUNT(*) per cohort_month, return_status='new'
+// Source: MKT-acquired new users tracked by channel/campaign. vertical_user='all' = deduplicated total.
+// M0a = actual BQ count. Retention % = users who had ≥1 visit in month N after first visit.
+// Jan cohort: COMPLETE (M0-M3). Feb: M3 partial. Mar: M2 partial. Apr/May: M0 only.
 const COHORT: Record<string,any[]> = {
-  // Retention % from BQ user_retention table (actuals). M0a derived from vMAU × 3% NUR.
-  PTY: _mkCohort("PTY",_ptymau,[
-    {m:"Jan",M1:68.2,M1r:null,M2:48.5,M2r:null,M3:38.1,M3r:null,M4:29.8,M4r:null,M5:24.6,M5r:null},
-    {m:"Feb",M1:67.9,M1r:null,M2:47.2,M2r:null,M3:null,M3r:null,M4:null,M4r:null,M5:null,M5r:null},
-    {m:"Mar",M1:68.1,M1r:null,M2:null,M2r:null,M3:null,M3r:null,M4:null,M4r:null,M5:null,M5r:null},
-    {m:"Apr",M1:63.8,M1r:null,M2:null,M2r:null,M3:null,M3r:null,M4:null,M4r:null,M5:null,M5r:null},
-    {m:"May",M1:null,M1r:null,M2:null,M2r:null,M3:null,M3r:null,M4:null,M4r:null,M5:null,M5r:null},
-  ]),
-  JOB: _mkCohort("JOB",_jobmau,[
-    {m:"Jan",M1:71.2,M1r:null,M2:52.1,M2r:null,M3:43.0,M3r:null,M4:35.2,M4r:null,M5:29.4,M5r:null},
-    {m:"Feb",M1:70.5,M1r:null,M2:51.3,M2r:null,M3:null,M3r:null,M4:null,M4r:null,M5:null,M5r:null},
-    {m:"Mar",M1:72.4,M1r:null,M2:null,M2r:null,M3:null,M3r:null,M4:null,M4r:null,M5:null,M5r:null},
-    {m:"Apr",M1:69.1,M1r:null,M2:null,M2r:null,M3:null,M3r:null,M4:null,M4r:null,M5:null,M5r:null},
-    {m:"May",M1:null,M1r:null,M2:null,M2r:null,M3:null,M3r:null,M4:null,M4r:null,M5:null,M5r:null},
-  ]),
-  VEH: _mkCohort("VEH",_vehmau,[
-    {m:"Jan",M1:55.8,M1r:null,M2:36.2,M2r:null,M3:26.4,M3r:null,M4:20.1,M4r:null,M5:16.2,M5r:null},
-    {m:"Feb",M1:54.3,M1r:null,M2:35.1,M2r:null,M3:null,M3r:null,M4:null,M4r:null,M5:null,M5r:null},
-    {m:"Mar",M1:58.9,M1r:null,M2:null,M2r:null,M3:null,M3r:null,M4:null,M4r:null,M5:null,M5r:null},
-    {m:"Apr",M1:57.2,M1r:null,M2:null,M2r:null,M3:null,M3r:null,M4:null,M4r:null,M5:null,M5r:null},
-    {m:"May",M1:null,M1r:null,M2:null,M2r:null,M3:null,M3r:null,M4:null,M4r:null,M5:null,M5r:null},
-  ]),
-  GDS: _mkCohort("GDS",_gdsmau,[
-    {m:"Jan",M1:62.4,M1r:null,M2:41.8,M2r:null,M3:31.2,M3r:null,M4:24.1,M4r:null,M5:19.8,M5r:null},
-    {m:"Feb",M1:61.9,M1r:null,M2:40.5,M2r:null,M3:null,M3r:null,M4:null,M4r:null,M5:null,M5r:null},
-    {m:"Mar",M1:64.7,M1r:null,M2:null,M2r:null,M3:null,M3r:null,M4:null,M4r:null,M5:null,M5r:null},
-    {m:"Apr",M1:60.3,M1r:null,M2:null,M2r:null,M3:null,M3r:null,M4:null,M4r:null,M5:null,M5r:null},
-    {m:"May",M1:null,M1r:null,M2:null,M2r:null,M3:null,M3r:null,M4:null,M4r:null,M5:null,M5r:null},
-  ]),
-  // ALL CHỢTỐT: deduplicated total platform cohort — needs separate BQ query:
-  //   SELECT cohort_month, COUNT(DISTINCT user_id) AS new_users,
-  //          COUNT(DISTINCT CASE WHEN m1_active THEN user_id END)/COUNT(*) AS ret_m1, ...
-  //   FROM `{project}.{dataset}.all_user_cohort_retention`   ← non-vertical table
-  //   GROUP BY 1
-  // Retention %: weighted avg of 4 verticals (proxy until BQ all-user query runs)
-  ALL: _mkCohort("PTY",[5859,5017,7614,6741,7031],[
-    {m:"Jan",M1:65.0,M1r:null,M2:44.7,M2r:null,M3:34.7,M3r:null,M4:27.3,M4r:null,M5:22.4,M5r:null},
-    {m:"Feb",M1:64.5,M1r:null,M2:43.8,M2r:null,M3:null,M3r:null,M4:null,M4r:null,M5:null,M5r:null},
-    {m:"Mar",M1:66.0,M1r:null,M2:null,M2r:null,M3:null,M3r:null,M4:null,M4r:null,M5:null,M5r:null},
-    {m:"Apr",M1:62.6,M1r:null,M2:null,M2r:null,M3:null,M3r:null,M4:null,M4r:null,M5:null,M5r:null},
-    {m:"May",M1:null,M1r:null,M2:null,M2r:null,M3:null,M3r:null,M4:null,M4r:null,M5:null,M5r:null},
-  ]).map((r,i)=>({
-    ...r,
-    // ALL uses total platform MAU × 3% NUR, not sum of 4 verticals (avoids overlap)
-    M0a: Math.round([5859,5017,7614,6741,7031][i]*1000*0.03),
-  })),
+  // Source: chotot-dwh.ct_digital.dashboard__retention_mapping_activation_by_source_campaign
+  // return_status='new', COUNTIF(mN>0)/COUNT(*). M0a = actual BQ cohort count.
+  // Jan cohort = most complete. Apr/May M1 partial (data still settling).
+  PTY:[
+    {c:"Jan",M0:100,M0a:10320, M1:55.4,M1a:5718,  M2:51.6,M2a:5330,  M3:43.3,M3a:4471},
+    {c:"Feb",M0:100,M0a:8760,  M1:58.7,M1a:5143,  M2:49.1,M2a:4298,  M3:null,M3a:null},
+    {c:"Mar",M0:100,M0a:12636, M1:55.4,M1a:7002,  M2:null,M2a:null,   M3:null,M3a:null},
+    {c:"Apr",M0:100,M0a:11590, M1:null,M1a:null,   M2:null,M2a:null,   M3:null,M3a:null},
+    {c:"May",M0:100,M0a:13053, M1:null,M1a:null,   M2:null,M2a:null,   M3:null,M3a:null},
+  ],
+  JOB:[
+    {c:"Jan",M0:100,M0a:9300,  M1:55.8,M1a:5192,  M2:50.4,M2a:4683,  M3:42.6,M3a:3964},
+    {c:"Feb",M0:100,M0a:8375,  M1:60.4,M1a:5061,  M2:49.4,M2a:4140,  M3:null,M3a:null},
+    {c:"Mar",M0:100,M0a:13709, M1:55.9,M1a:7665,  M2:null,M2a:null,   M3:null,M3a:null},
+    {c:"Apr",M0:100,M0a:9926,  M1:null,M1a:null,   M2:null,M2a:null,   M3:null,M3a:null},
+    {c:"May",M0:100,M0a:11773, M1:null,M1a:null,   M2:null,M2a:null,   M3:null,M3a:null},
+  ],
+  VEH:[
+    {c:"Jan",M0:100,M0a:10282, M1:59.1,M1a:6075,  M2:53.9,M2a:5537,  M3:47.4,M3a:4876},
+    {c:"Feb",M0:100,M0a:9498,  M1:62.5,M1a:5932,  M2:51.9,M2a:4929,  M3:null,M3a:null},
+    {c:"Mar",M0:100,M0a:13517, M1:58.4,M1a:7894,  M2:null,M2a:null,   M3:null,M3a:null},
+    {c:"Apr",M0:100,M0a:12377, M1:null,M1a:null,   M2:null,M2a:null,   M3:null,M3a:null},
+    {c:"May",M0:100,M0a:12055, M1:null,M1a:null,   M2:null,M2a:null,   M3:null,M3a:null},
+  ],
+  GDS:[
+    {c:"Jan",M0:100,M0a:15983, M1:56.5,M1a:9036,  M2:50.1,M2a:8006,  M3:44.2,M3a:7071},
+    {c:"Feb",M0:100,M0a:14312, M1:58.3,M1a:8351,  M2:48.9,M2a:6994,  M3:null,M3a:null},
+    {c:"Mar",M0:100,M0a:18784, M1:54.6,M1a:10255, M2:null,M2a:null,   M3:null,M3a:null},
+    {c:"Apr",M0:100,M0a:16260, M1:null,M1a:null,   M2:null,M2a:null,   M3:null,M3a:null},
+    {c:"May",M0:100,M0a:17458, M1:null,M1a:null,   M2:null,M2a:null,   M3:null,M3a:null},
+  ],
+  // ALL = vertical_user='all' in BQ — deduplicated total platform (no cross-vertical overlap) ✅
+  ALL:[
+    {c:"Jan",M0:100,M0a:24291, M1:56.6,M1a:13741, M2:50.7,M2a:12304, M3:43.7,M3a:10622},
+    {c:"Feb",M0:100,M0a:22054, M1:60.0,M1a:13234, M2:49.4,M2a:10905, M3:null,M3a:null},
+    {c:"Mar",M0:100,M0a:31558, M1:55.8,M1a:17603, M2:null,M2a:null,   M3:null,M3a:null},
+    {c:"Apr",M0:100,M0a:27046, M1:null,M1a:null,   M2:null,M2a:null,   M3:null,M3a:null},
+    {c:"May",M0:100,M0a:29343, M1:null,M1a:null,   M2:null,M2a:null,   M3:null,M3a:null},
+  ],
 };
 
 // Growth outcomes (Jan-May actual from MTM sheet)
@@ -898,16 +870,15 @@ const TAB_UE=()=>{
   // Web/App platform split is NOT applied because we don't have the actual
   // platform distribution from BQ yet. Until BQ provides it, Lifespan = App cohort.
   // TODO: Pull platform_split (app_pct, web_pct) from BQ and adjust accordingly.
+  // Lifespan = 1 + M1% + M2% + M3% (Jan 2026 cohort, BQ actuals)
+  // Source: dashboard__retention_mapping_activation_by_source_campaign, vertical_user by vertical
+  // Jan cohort has M0-M3 complete. Lifespan is partial (M4+ not yet available → actual will be higher)
   const COHORT_LS: Record<string,number> = {
-    PTY: +(1+0.682+0.485+0.381+0.298+0.246).toFixed(2),  // = 3.09M  (Jan cohort, actual BQ)
-    JOB: +(1+0.712+0.521+0.430+0.352+0.294).toFixed(2),  // = 3.31M  (Jan cohort, actual BQ)
-    VEH: +(1+0.558+0.362+0.264+0.201+0.162).toFixed(2),  // = 2.55M  (Jan cohort, actual BQ)
-    GDS: +(1+0.624+0.418+0.312+0.241+0.198).toFixed(2),  // = 2.79M  (Jan cohort, actual BQ)
-    ALL: +(1+(0.682+0.712+0.558+0.624)/4
-           +(0.485+0.521+0.362+0.418)/4
-           +(0.381+0.430+0.264+0.312)/4
-           +(0.298+0.352+0.201+0.241)/4
-           +(0.246+0.294+0.162+0.198)/4).toFixed(2), // = avg 4 verticals
+    PTY: +(1+0.554+0.516+0.433).toFixed(2),  // = 2.50M (Jan BQ: M1=55.4%, M2=51.6%, M3=43.3%)
+    JOB: +(1+0.558+0.504+0.426).toFixed(2),  // = 2.49M (Jan BQ: M1=55.8%, M2=50.4%, M3=42.6%)
+    VEH: +(1+0.591+0.539+0.474).toFixed(2),  // = 2.60M (Jan BQ: M1=59.1%, M2=53.9%, M3=47.4%)
+    GDS: +(1+0.565+0.501+0.442).toFixed(2),  // = 2.51M (Jan BQ: M1=56.5%, M2=50.1%, M3=44.2%)
+    ALL: +(1+0.566+0.507+0.437).toFixed(2),  // = 2.51M (Jan BQ all: M1=56.6%, M2=50.7%, M3=43.7%)
   };
   const LS = COHORT_LS[selV==="ALL"?"ALL":selV] || COHORT_LS["ALL"];
   const LS_LABEL = `${LS.toFixed(2)}M (Jan cohort, BQ actuals — web/app split pending)`;
@@ -1098,7 +1069,7 @@ const TAB_UE=()=>{
                     Cohort Retention — {selV==="ALL"?"All Chợ Tốt + Per Vertical":selV}
                   </span>
                   <span style={{fontSize:11,color:"#94a3b8",marginLeft:8}}>
-                    Retention % = BQ actuals · M0a = vMAU × 3% NUR (M0a exact value needs BQ cohort query) · Lifespan = {LS.toFixed(2)}M
+                    Source: ct_digital.dashboard__retention_mapping_activation_by_source_campaign · M0a = real BQ count · Lifespan partial (M0+M1+M2+M3 only, M4+ pending)
                   </span>
                 </div>
               </div>
