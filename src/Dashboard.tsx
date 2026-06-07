@@ -996,123 +996,128 @@ const TAB_UE=()=>{
         );
         const fmtX=(v:any)=>`${v}×`;
         const fmtK=(v:any)=>`${Math.round(+v||0).toLocaleString("vi-VN")} K ₫`;
-        // MoM badge helper
-        const MoM=({arr,k}:{arr:any[],k:string})=>{
+        // MoM badge — positioned absolute at top-right of card
+        const ChartCard=({title,sub,arr,k,children,h=175}:{title:string;sub:string;arr:any[];k:string;children:any;h?:number})=>{
           const b=momBadge(arr,k);
-          if(!b) return null;
-          return <span style={{fontSize:10,fontWeight:700,color:b.up?"#10b981":"#ef4444",marginLeft:6}}>{b.str} MoM</span>;
+          return (
+            <div style={{background:"#fff",border:"1px solid #f1f5f9",borderRadius:8,boxShadow:"0 1px 4px rgba(0,0,0,.06)",padding:16,position:"relative"}}>
+              {b&&<span style={{position:"absolute",top:12,right:14,fontSize:10,fontWeight:800,
+                color:b.up?"#10b981":"#ef4444",
+                background:b.up?"#f0fdf4":"#fff5f5",
+                border:`1px solid ${b.up?"#bbf7d0":"#fecaca"}`,
+                borderRadius:20,padding:"2px 8px",whiteSpace:"nowrap"}}>
+                {b.up?"↑":"↓"} {b.str} MoM
+              </span>}
+              <div style={{fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.06em",color:"#64748b",marginBottom:2,paddingRight:90}}>{title}</div>
+              <div style={{fontSize:11,color:"#94a3b8",fontStyle:"italic",marginBottom:10}}>{sub}</div>
+              {children}
+            </div>
+          );
         };
+        const k=selV==="ALL"?"ALL":selV;
         return (
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:14}}>
-            <Card>
-              <div style={{display:"flex",alignItems:"center",marginBottom:12}}>
-                <div>
-                  <div style={{fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.06em",color:"#64748b"}}>LTV/CAC Monthly — By Vertical</div>
-                  <div style={{fontSize:11,color:"#94a3b8",fontStyle:"italic"}}>LTV ÷ CAC · target &gt;3.0×</div>
-                </div>
-                <MoM arr={ltvcacMonthly} k={selV==="ALL"?"ALL":selV}/>
-              </div>
+            <ChartCard title="LTV/CAC Monthly — By Vertical" sub="LTV ÷ CAC · mỗi vertical là 1 line" arr={ltvcacMonthly} k={k}>
               <VLines data={ltvcacMonthly} fmt={fmtX}/>
-            </Card>
-            <Card>
-              <div style={{display:"flex",alignItems:"center",marginBottom:12}}>
-                <div>
-                  <div style={{fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.06em",color:"#64748b"}}>VPL Monthly — By Vertical (K ₫)</div>
-                  <div style={{fontSize:11,color:"#94a3b8",fontStyle:"italic"}}>Revenue per Lead · K ₫</div>
-                </div>
-                <MoM arr={vplMonthly} k={selV==="ALL"?"ALL":selV}/>
-              </div>
+            </ChartCard>
+            <ChartCard title="VPL Monthly — By Vertical (K ₫)" sub="Revenue per Lead" arr={vplMonthly} k={k}>
               <VLines data={vplMonthly} fmt={fmtK}/>
-            </Card>
-            <Card>
-              <div style={{display:"flex",alignItems:"center",marginBottom:12}}>
-                <div>
-                  <div style={{fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.06em",color:"#64748b"}}>LTV Monthly — By Vertical (K ₫)</div>
-                  <div style={{fontSize:11,color:"#94a3b8",fontStyle:"italic"}}>Lifetime Value = LPU × VPL × {LS}M · K ₫</div>
-                </div>
-                <MoM arr={ltvMonthly} k={selV==="ALL"?"ALL":selV}/>
-              </div>
+            </ChartCard>
+            <ChartCard title="LTV Monthly — By Vertical (K ₫)" sub={`Lifetime Value = LPU × VPL × ${LS.toFixed(1)}M`} arr={ltvMonthly} k={k} h={150}>
               <VLines data={ltvMonthly} fmt={fmtK} h={150}/>
-            </Card>
-            <Card>
-              <div style={{display:"flex",alignItems:"center",marginBottom:12}}>
-                <div>
-                  <div style={{fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.06em",color:"#64748b"}}>Blended CAC Monthly — By Vertical (K ₫)</div>
-                  <div style={{fontSize:11,color:"#94a3b8",fontStyle:"italic"}}>Spend ÷ (MAU × {(NUR*100).toFixed(0)}% new users) · K ₫</div>
-                </div>
-                <MoM arr={cacMonthly} k={selV==="ALL"?"ALL":selV}/>
-              </div>
+            </ChartCard>
+            <ChartCard title="Blended CAC Monthly — By Vertical (K ₫)" sub="Spend ÷ (MAU × 3% new users)" arr={cacMonthly} k={k} h={150}>
               <VLines data={cacMonthly} fmt={fmtK} h={150}/>
-            </Card>
+            </ChartCard>
           </div>
         );
       })()}
 
-      {/* Cohort heatmap — M0, M1, M2, M3 with Web/App chip */}
-      <Card style={{padding:0,overflow:"hidden"}}>
-        <div style={{padding:"13px 18px",borderBottom:"1px solid #f1f5f9",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-          <div style={{display:"flex",alignItems:"center",gap:8}}>
-            <Activity size={13} color="#94a3b8"/>
-            <span style={{fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.06em",color:"#64748b"}}>
-              Cohort Retention — {cohortVert} {cohortPlatform==="Web"?"(Web — BQ data pending)":"(BQ actual, Jan–May 2026)"}
-            </span>
-          </div>
-          <div style={{display:"flex",alignItems:"center",gap:10}}>
-            <div style={{display:"flex",gap:6}}>
-              {[{k:"All",l:"All (BQ data)"},{k:"App",l:"App"},{k:"Web",l:"Web (BQ pending)"}].map(({k,l})=>(
-                <button key={k} onClick={()=>setCohortPlatform(k)}
-                  style={{padding:"3px 12px",borderRadius:20,fontSize:11,fontWeight:700,cursor:"pointer",
-                    border:`1.5px solid ${k==="Web"?"#94a3b8":"#6366f1"}`,
-                    background:cohortPlatform===k?(k==="Web"?"#94a3b8":"#6366f1"):"transparent",
-                    color:cohortPlatform===k?"#fff":(k==="Web"?"#94a3b8":"#6366f1"),
-                    transition:"all .15s"}}>
-                  {l}
-                </button>
-              ))}
+      {/* Cohort Retention — changes with vertical filter, no platform chip */}
+      {(()=>{
+        // Determine which verticals to show
+        const showVerts = selV==="ALL" ? [...VC] : [selV as V];
+        // Columns: only show up to highest M with any data across shown verticals
+        const COLS_ALL = ["M0","M1","M2","M3","M4","M5"] as const;
+        const hasData=(col:string)=>showVerts.some(v=>(COHORT[v]||[]).some((r:any)=>r[col]!=null));
+        const activeCols = COLS_ALL.filter(c=>c==="M0"||hasData(c));
+        const colLabel: Record<string,string> = {M0:"M0 Baseline",M1:"M1 +1M",M2:"M2 +2M",M3:"M3 +3M",M4:"M4 +4M",M5:"M5 +5M"};
+
+        return (
+          <Card style={{padding:0,overflow:"hidden"}}>
+            <div style={{padding:"13px 18px",borderBottom:"1px solid #f1f5f9",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+              <div style={{display:"flex",alignItems:"center",gap:8}}>
+                <Activity size={13} color="#94a3b8"/>
+                <div>
+                  <span style={{fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.06em",color:"#64748b"}}>
+                    Cohort Retention — {selV==="ALL"?"All Verticals":selV}
+                  </span>
+                  <span style={{fontSize:11,color:"#94a3b8",marginLeft:8}}>Jan–May 2026 cohorts · BQ actuals · Lifespan = sum(M0→M{activeCols.length-1}) = {LS.toFixed(2)}M</span>
+                </div>
+              </div>
+              <span style={{fontSize:10,color:"#94a3b8",display:"flex",alignItems:"center",gap:4}}><Database size={10}/> BigQuery</span>
             </div>
-            <span style={{fontSize:10,color:"#94a3b8",display:"flex",alignItems:"center",gap:4}}><Database size={10}/> BigQuery</span>
-          </div>
-        </div>
-        <div style={{padding:16,overflowX:"auto"}}>
-          <table style={{width:"100%",borderCollapse:"separate",borderSpacing:3}}>
-            <thead>
-              <tr>
-                {["Cohort","M0 Baseline","M1 +1M","M2 +2M","M3 +3M","M4 +4M","M5 +5M","M6 +6M"].map(h=>(
-                  <th key={h} style={{padding:"7px 10px",textAlign:"center",fontSize:10,fontWeight:700,color:h.includes("M4")||h.includes("M5")||h.includes("M6")?"#6366f1":"#64748b",background:h.includes("M4")||h.includes("M5")||h.includes("M6")?"#eff4ff":"#f8fafc",borderRadius:5,whiteSpace:"nowrap"}}>{h}</th>
+            <div style={{padding:16,overflowX:"auto"}}>
+              {showVerts.map(v=>{
+                const rows = COHORT[v]||[];
+                if(!rows.length) return null;
+                return (
+                  <div key={v} style={{marginBottom:selV==="ALL"?20:0}}>
+                    {selV==="ALL"&&(
+                      <div style={{fontSize:11,fontWeight:800,color:VC_C[v],marginBottom:6,display:"flex",alignItems:"center",gap:6}}>
+                        <span style={{width:8,height:8,borderRadius:"50%",background:VC_C[v],display:"inline-block"}}/>
+                        {v}
+                        <span style={{fontSize:10,fontWeight:400,color:"#94a3b8"}}>· Lifespan {COHORT_LS[v]?.toFixed(2)}M (App, Jan cohort)</span>
+                      </div>
+                    )}
+                    <table style={{width:"100%",borderCollapse:"separate",borderSpacing:3,marginBottom:4}}>
+                      <thead>
+                        <tr>
+                          {["Cohort",...activeCols].map(h=>(
+                            <th key={h} style={{padding:"6px 10px",textAlign:"center",fontSize:10,fontWeight:700,
+                              color:(h==="M4"||h==="M5")?"#6366f1":"#64748b",
+                              background:(h==="M4"||h==="M5")?"#eff4ff":"#f8fafc",
+                              borderRadius:5,whiteSpace:"nowrap"}}>
+                              {colLabel[h]||h}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {rows.map((r:any)=>(
+                          <tr key={r.c}>
+                            <td style={{padding:"6px 10px",fontWeight:700,color:"#475569",background:"#f8fafc",borderRadius:6,textAlign:"center",fontSize:11}}>{r.c} 2026</td>
+                            {activeCols.map(col=>{
+                              const pct=r[col] as number|null, abs=r[`${col}a`] as number|null;
+                              return (
+                                <td key={col} style={{borderRadius:7,textAlign:"center",padding:"6px 10px",
+                                  background:pct!=null?retBg(pct):"#f8fafc",color:retTx(pct),
+                                  border:(col==="M4"||col==="M5")&&pct!=null?"1px dashed #6366f166":undefined}}>
+                                  {pct!=null?(<>
+                                    <div style={{fontSize:13,fontWeight:800}}>{pct.toFixed(1)}%</div>
+                                    <div style={{fontSize:9,opacity:0.65,marginTop:1}}>({abs!=null?fK(abs):"—"})</div>
+                                  </>):<span style={{color:"#e2e8f0",fontSize:11}}>—</span>}
+                                </td>
+                              );
+                            })}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                );
+              })}
+              <div style={{display:"flex",gap:10,marginTop:8,flexWrap:"wrap",fontSize:11,color:"#64748b",alignItems:"center"}}>
+                <span style={{fontWeight:700}}>Legend:</span>
+                {[{c:"#bbf7d0",l:"≥70%"},{c:"#d9f99d",l:"55–70%"},{c:"#fef9c3",l:"40–55%"},{c:"#fed7aa",l:"25–40%"},{c:"#fecaca",l:"<25%"}].map(l=>(
+                  <span key={l.l} style={{display:"flex",alignItems:"center",gap:4}}><span style={{width:9,height:9,borderRadius:2,background:l.c,display:"inline-block"}}/>{l.l}</span>
                 ))}
-              </tr>
-            </thead>
-            <tbody>
-              {cohortRows.map((r:any)=>(
-                <tr key={r.c}>
-                  <td style={{padding:"7px 10px",fontWeight:700,color:"#475569",background:"#f8fafc",borderRadius:6,textAlign:"center",fontSize:11}}>{r.c} 2026</td>
-                  {(["M0","M1","M2","M3","M4","M5","M6"]).map(col=>{
-                    const pct=r[col] as number|null, abs=r[`${col}a`] as number|null;
-                    const isLate=col==="M4"||col==="M5"||col==="M6";
-                    return (
-                      <td key={col} style={{borderRadius:7,textAlign:"center",padding:"7px 10px",background:pct!=null?retBg(pct):"#f8fafc",color:retTx(pct),border:isLate&&pct!=null?"1px dashed #6366f166":undefined}}>
-                        {pct!=null?(<>
-                          <div style={{fontSize:13,fontWeight:800}}>{pct.toFixed(1)}%</div>
-                          <div style={{fontSize:9,opacity:0.65,marginTop:1}}>({abs!=null?fK(abs):"—"})</div>
-                        </>):<span style={{color:"#e2e8f0",fontSize:11}}>—</span>}
-                      </td>
-                    );
-                  })}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          <div style={{display:"flex",gap:12,marginTop:10,flexWrap:"wrap",fontSize:11,color:"#64748b",alignItems:"center"}}>
-            <span style={{fontWeight:700}}>Legend:</span>
-            {[{c:"#bbf7d0",l:"≥70%"},{c:"#d9f99d",l:"55–70%"},{c:"#fef9c3",l:"40–55%"},{c:"#fed7aa",l:"25–40%"},{c:"#fecaca",l:"<25%"}].map(l=>(
-              <span key={l.l} style={{display:"flex",alignItems:"center",gap:4}}><span style={{width:10,height:10,borderRadius:3,background:l.c,display:"inline-block"}}/>{l.l}</span>
-            ))}
-            <span style={{marginLeft:8,color:"#6366f1",fontWeight:600}}>M4–M6</span><span style={{color:"#94a3b8"}}>= dashed border, validates 6M Lifespan assumption for LTV calculation</span>
-            <span style={{marginLeft:8,color:"#94a3b8"}}>· "All (Web+App)" = tổng cohort Chợ Tốt</span>
-            <span style={{color:"#94a3b8",marginLeft:4}}>Numbers in parentheses = absolute user count</span>
-          </div>
-        </div>
-      </Card>
+                <span style={{color:"#6366f1",marginLeft:6}}>M4–M5</span><span style={{color:"#94a3b8"}}> = validates Lifespan assumption · Numbers = absolute user count</span>
+              </div>
+            </div>
+          </Card>
+        );
+      })()}
     </div>
   );
 };
