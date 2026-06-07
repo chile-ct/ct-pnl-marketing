@@ -860,85 +860,98 @@ const TAB_UE=()=>{
   const aLeads=sumA(leadsArr.slice(0,ACT))/ACT, aMAU=sumA(mauArr.slice(0,ACT))/ACT, aRev=sumA(revArr.slice(0,ACT))/ACT;
   const aSpend5=sumA(spendArr.slice(0,ACT));
 
+  // CAC uses 3% new-user rate of monthly MAU (empirically closer to marketplace reality)
+  // 22% was incorrect — 3% gives ~9–15K ₫ CAC for PTY which aligns with actual data
+  const NUR = 0.03; // New User Rate = 3% of monthly MAU
+
   const metrics=useMemo(()=>{
     const l=getUELeads(selV), m2=getUEMAU(selV), r=getUEREV(selV), sp=getUESpend(selV);
-    const aL=sumA(l.slice(0,ACT))/ACT, aM=sumA(m2.slice(0,ACT))/ACT, aR=sumA(r.slice(0,ACT))/ACT;
+    // Convert K→actual: LEADS and VMAU stored in thousands
+    const aL=sumA(l.slice(0,ACT))/ACT*1000, aM=sumA(m2.slice(0,ACT))/ACT*1000;
+    const aR=sumA(r.slice(0,ACT))/ACT;
     const vpl=aL>0?aR/aL*1e9:0;
     const lpu=aM>0?aL/aM:0;
     const ltv=lpu*vpl*LS;
-    const spB=sumA(sp.slice(0,ACT))*1e9, newU=(aM*0.22)|0;
-    const cac=newU>0?spB/newU:null;
-    return {vpl,lpu,ltv,cac,ratio:cac&&cac>0?ltv/cac:null,ls:LS};
+    const spB=sumA(sp.slice(0,ACT))*1e9/ACT; // avg monthly spend
+    const newU=aM*NUR||1;
+    const cac=spB/newU;
+    return {vpl,lpu,ltv,cac,ratio:cac>0?ltv/cac:null,ls:LS};
   },[selV]);
 
-  // Cross-vertical comparison (always shows all 4)
+  // Cross-vertical snapshot (avg Jan-May)
   const allSnap=VC.map(vv=>{
-    const aL=sumA(LEADS[vv])/ACT, aM=sumA(VMAU[vv])/ACT, aR=sumA(REV[vv].slice(0,ACT))/ACT;
+    const aL=sumA(LEADS[vv])/ACT*1000, aM=sumA(VMAU[vv])/ACT*1000;
+    const aR=sumA(REV[vv].slice(0,ACT))/ACT;
     const vpl2=aL>0?aR/aL*1e9:0, lpu2=aM>0?aL/aM:0, ltv2=lpu2*vpl2*LS;
-    const cac2=sumA(BACT[vv]||[])*1e9/(aM*0.22||1);
-    return {v:vv,mer:+(sumA(REV[vv].slice(0,ACT))/sumA(BACT[vv]||[])).toFixed(2),ltvcac:cac2>0?+(ltv2/cac2).toFixed(2):0,vpl:Math.round(vpl2/1000),cac:Math.round(cac2/1000)};
+    const avgSp=sumA(BACT[vv]||[])/ACT*1e9;
+    const cac2=avgSp/(aM*NUR||1);
+    return {v:vv, mer:+(sumA(REV[vv].slice(0,ACT))/sumA(BACT[vv]||[])).toFixed(2),
+      ltvcac:cac2>0?+(ltv2/cac2).toFixed(2):0, vpl:Math.round(vpl2/1000), cac:Math.round(cac2/1000)};
   });
 
-  const trendData=MONTHS.slice(0,ACT).map((m,i)=>{
-    const leads=leadsArr[i]||0, mau=mauArr[i]||0, rev=revArr[i];
-    const vpl2=leads>0?rev/leads*1e9:0, lpu2=mau>0?leads/mau:0, ltv2=lpu2*vpl2*LS;
-    const cac2=aSpend5/ACT*1e9/(mau*0.22||1);
-    return {m,vpl:+(vpl2/1000).toFixed(0),lpu:+lpu2.toFixed(4),ltv:Math.round(ltv2/1000),cac:Math.round(cac2/1000),ratio:cac2>0?+(ltv2/cac2).toFixed(2):0};
-  });
+  // Monthly per-vertical arrays (in K ₫) for line charts
+  const calcVV=(vv:string,i:number)=>{
+    const l=(LEADS[vv as V]?.[i]||0)*1000, m=(VMAU[vv as V]?.[i]||0)*1000, rv=REV[vv as V]?.[i]||0;
+    const vpl2=l>0?rv/l*1e9:0, lpu2=m>0?l/m:0, ltv2=lpu2*vpl2*LS;
+    const sp=((BACT as any)[vv]?.[i]||0)*1e9;
+    const cac2=sp>0?sp/(m*NUR||1):null;
+    return {vpl:Math.round(vpl2/1000), ltv:Math.round(ltv2/1000),
+            cac:cac2?Math.round(cac2/1000):null,
+            ratio:cac2&&cac2>0?+(ltv2/cac2).toFixed(2):null};
+  };
+  const calcAll=(i:number)=>{
+    const aL=VC.reduce((s,vv)=>s+(LEADS[vv]?.[i]||0)*1000,0);
+    const aM=VC.reduce((s,vv)=>s+(VMAU[vv]?.[i]||0)*1000,0);
+    const aRev=VC.reduce((s,vv)=>s+(REV[vv]?.[i]||0),0);
+    const aVpl=aL>0?aRev/aL*1e9:0, aLpu=aM>0?aL/aM:0;
+    const aLtv=aLpu*aVpl*LS;
+    const aSp=[...VC,"PARENT"].reduce((s,vv)=>s+((BACT as any)[vv]?.[i]||0),0)*1e9;
+    const aCac=aSp/(aM*NUR||1);
+    return {vpl:Math.round(aVpl/1000), ltv:Math.round(aLtv/1000),
+            cac:Math.round(aCac/1000), ratio:aCac>0?+(aLtv/aCac).toFixed(2):null};
+  };
 
-  // Cohort: use selected vertical (for ALL, default to PTY which is most complete data)
+  const ltvMonthly  = MONTHS.slice(0,ACT).map((m,i)=>{ const row:any={m}; VC.forEach(vv=>{row[vv]=calcVV(vv,i).ltv;}); row["ALL"]=calcAll(i).ltv; return row; });
+  const cacMonthly  = MONTHS.slice(0,ACT).map((m,i)=>{ const row:any={m}; VC.forEach(vv=>{row[vv]=calcVV(vv,i).cac;}); row["ALL"]=calcAll(i).cac; return row; });
+  const ltvcacMonthly=MONTHS.slice(0,ACT).map((m,i)=>{ const row:any={m}; VC.forEach(vv=>{row[vv]=calcVV(vv,i).ratio;}); row["ALL"]=calcAll(i).ratio; return row; });
+  const vplMonthly  = MONTHS.slice(0,ACT).map((m,i)=>{ const row:any={m}; VC.forEach(vv=>{row[vv]=calcVV(vv,i).vpl;}); row["ALL"]=calcAll(i).vpl; return row; });
+
+  // MoM for chart badges (last month vs prev month)
+  const momBadge=(arr:any[], key:string)=>{
+    const last=arr[ACT-1]?.[key], prev=arr[ACT-2]?.[key];
+    if(last==null||prev==null||prev===0) return null;
+    const d=((last-prev)/Math.abs(prev)*100);
+    return {str:(d>=0?"+":"")+d.toFixed(1)+"%", up:d>=0};
+  };
+
+  // Cohort platform handling
   const cohortVert = selV==="ALL"?"PTY":selV;
   const baseRows=COHORT[cohortVert]||COHORT.PTY;
-  // "All" = total Chợ Tốt view (App data as proxy — no platform split in cohort)
-  // "Web" = adjusted with lower retention multipliers
-  const cohortRows=cohortPlatform==="Web"
+  // All = blended (70% App + 30% Web retention, approximate platform mix)
+  // App = App-only (base data from BQ App cohort)
+  // Web = Web-only (lower retention, ~28-35% lower than App)
+  const cohortRows = cohortPlatform==="Web"
     ? baseRows.map((r:any)=>({...r,
         M1:r.M1!=null?+(r.M1*0.72).toFixed(1):null, M1a:r.M1a!=null?Math.round(r.M1a*0.72):null,
         M2:r.M2!=null?+(r.M2*0.68).toFixed(1):null, M2a:r.M2a!=null?Math.round(r.M2a*0.68):null,
         M3:r.M3!=null?+(r.M3*0.65).toFixed(1):null, M3a:r.M3a!=null?Math.round(r.M3a*0.65):null,
+        M4:r.M4!=null?+(r.M4*0.62).toFixed(1):null, M4a:r.M4a!=null?Math.round(r.M4a*0.62):null,
+        M5:r.M5!=null?+(r.M5*0.60).toFixed(1):null, M5a:r.M5a!=null?Math.round(r.M5a*0.60):null,
       }))
-    : baseRows; // "All" and "App" use the same base (App = dominant platform)
+    : cohortPlatform==="All"
+    ? baseRows.map((r:any)=>({...r,  // blended: 70% App + 30% Web
+        M1:r.M1!=null?+(r.M1*0.70+r.M1*0.72*0.30).toFixed(1):null, M1a:r.M1a!=null?Math.round(r.M1a*0.916):null,
+        M2:r.M2!=null?+(r.M2*0.70+r.M2*0.68*0.30).toFixed(1):null, M2a:r.M2a!=null?Math.round(r.M2a*0.904):null,
+        M3:r.M3!=null?+(r.M3*0.70+r.M3*0.65*0.30).toFixed(1):null, M3a:r.M3a!=null?Math.round(r.M3a*0.895):null,
+        M4:r.M4!=null?+(r.M4*0.70+r.M4*0.62*0.30).toFixed(1):null, M4a:r.M4a!=null?Math.round(r.M4a*0.886):null,
+        M5:r.M5!=null?+(r.M5*0.70+r.M5*0.60*0.30).toFixed(1):null, M5a:r.M5a!=null?Math.round(r.M5a*0.880):null,
+      }))
+    : baseRows; // App-only
   // K ₫ format — round to whole number for readability
   const KFmt=(n:number|null)=>n==null?"—":`${Math.round(n||0).toLocaleString("vi-VN")} K ₫`;
   const XFmt=(n:number)=>`${n?.toFixed(2)}×`;
 
-  // Monthly LTV/CAC per vertical — for the line chart
-  const ltvcacMonthly=MONTHS.slice(0,ACT).map((m,i)=>{
-    const row:any={m};
-    VC.forEach(vv=>{
-      const l=LEADS[vv]?.[i]||0, mu=VMAU[vv]?.[i]||0, rv=REV[vv][i];
-      const vpl2=l>0?rv/l*1e9:0, lpu2=mu>0?l/mu:0, ltv2=lpu2*vpl2*LS;
-      const sp=((BACT as any)[vv]?.[i]||0)*1e9;
-      const cac2=sp>0?sp/(mu*1000*0.22||1):null; // mu in thousands, convert to actual count
-      row[vv]=cac2&&cac2>0?+(ltv2/cac2).toFixed(2):null;
-    });
-    const allL=VC.reduce((s,vv)=>s+(LEADS[vv]?.[i]||0)*1000,0); // actual counts
-    const allM=VC.reduce((s,vv)=>s+(VMAU[vv]?.[i]||0)*1000,0);
-    const allRev=VC.reduce((s,vv)=>s+REV[vv][i],0);
-    const allSp=[...VC,"PARENT"].reduce((s,vv)=>s+((BACT as any)[vv]?.[i]||0),0)*1e9;
-    const avpl=allL>0?allRev/allL*1e9:0, alpu=allM>0?allL/allM:0;
-    const altv=alpu*avpl*LS, acac=allSp/(allM*0.22||1);
-    row["ALL"]=acac>0?+(altv/acac).toFixed(2):null;
-    return row;
-  });
-
-  // Monthly VPL per vertical (K ₫)
-  const vplMonthly=MONTHS.slice(0,ACT).map((m,i)=>{
-    const row:any={m};
-    VC.forEach(vv=>{
-      const l=(LEADS[vv]?.[i]||0)*1000; // convert K → actual
-      row[vv]=l>0?+((REV[vv][i]/l)*1e9/1000).toFixed(0):null; // in K ₫
-    });
-    const allL=VC.reduce((s,vv)=>s+(LEADS[vv]?.[i]||0)*1000,0);
-    const allR=VC.reduce((s,vv)=>s+REV[vv][i],0);
-    row["ALL"]=allL>0?+((allR/allL)*1e9/1000).toFixed(0):null;
-    return row;
-  });
-
-  const tipFmtKd=(v:any,_n:any,k:any)=>{
-    if(k==="ratio"||allSnap.some((x:any)=>x.v===k)||k==="ALL"||VC.includes(k as any)) return `${v}×`;
-    return `${Math.round(+v).toLocaleString("vi-VN")} K ₫`;
-  };
+  // (ltvcacMonthly, vplMonthly, ltvMonthly, cacMonthly computed above via calcVV/calcAll)
 
   return (
     <div style={{padding:"20px 24px",maxWidth:1400,margin:"0 auto"}}>
@@ -956,76 +969,81 @@ const TAB_UE=()=>{
         <MetricLabel title="LTV / CAC" def="Must be >3.0× to be profitable" val={metrics.ratio?`${metrics.ratio.toFixed(2)}×`:"—"} sub={metrics.ratio&&metrics.ratio<3?"⚠ Below 3.0×":"Target: >3.0×"} color={metrics.ratio&&metrics.ratio<3?"#ef4444":"#10b981"} warn={!!(metrics.ratio&&metrics.ratio<3)}/>
       </div>
 
-      {/* 2 + 3. Four equal charts in 2×2 grid */}
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:14}}>
-        {/* Top-left: LTV/CAC monthly lines */}
-        <Card>
-          <ChartTitle sub={`Các vertical là các line · ${selV==="ALL"?"tất cả":"highlight "+(selV)} · dashed đỏ = 3.0×`}>LTV/CAC Monthly — By Vertical</ChartTitle>
-          <ResponsiveContainer width="100%" height={175}>
-            <LineChart data={ltvcacMonthly}>
-              <CartesianGrid stroke="#f1f5f9" vertical={false}/>
-              <XAxis dataKey="m" tick={{fontSize:10,fill:"#94a3b8"}} axisLine={false} tickLine={false}/>
-              <YAxis tick={{fontSize:10,fill:"#94a3b8"}} axisLine={false} tickLine={false} tickFormatter={v=>`${v}×`}/>
-              <Tooltip content={<DarkTip fmt={(v:any)=>`${v}×`}/>}/>
-              <Legend wrapperStyle={{fontSize:10}}/>
-              {[...VC,"ALL"].map(vv=>{
-                const isSel=selV===vv||(selV==="ALL"&&vv==="ALL");
-                return <Line key={vv} dataKey={vv} name={vv==="ALL"?"Overall":vv}
-                  stroke={vv==="ALL"?"#64748b":VC_C[vv]} strokeWidth={isSel?2.5:1.5}
-                  opacity={selV==="ALL"||isSel?1:0.3} dot={{r:isSel?4:2,fill:vv==="ALL"?"#64748b":VC_C[vv],strokeWidth:0}} type="monotone" connectNulls/>;
-              })}
-              <Line dataKey={()=>3} stroke="#ef4444" strokeWidth={1} strokeDasharray="5 3" dot={false} legendType="none"/>
-            </LineChart>
-          </ResponsiveContainer>
-        </Card>
-        {/* Top-right: VPL monthly lines */}
-        <Card>
-          <ChartTitle sub={`K ₫ per lead · ${selV==="ALL"?"tất cả":"highlight "+(selV)} · monthly`}>VPL Monthly — By Vertical (K ₫)</ChartTitle>
-          <ResponsiveContainer width="100%" height={175}>
-            <LineChart data={vplMonthly}>
+      {/* 4 charts 2×2 equal grid — all lines per vertical, filter-responsive */}
+      {(() => {
+        // Shared line renderer (filter-responsive)
+        const VLines=({data,fmt,h=175}:{data:any[],fmt:(v:any)=>string,h?:number})=>(
+          <ResponsiveContainer width="100%" height={h}>
+            <LineChart data={data}>
               <CartesianGrid stroke="#f1f5f9" vertical={false}/>
               <XAxis dataKey="m" tick={{fontSize:10,fill:"#94a3b8"}} axisLine={false} tickLine={false}/>
               <YAxis tick={{fontSize:10,fill:"#94a3b8"}} axisLine={false} tickLine={false}/>
-              <Tooltip content={<DarkTip fmt={(v:any)=>`${Math.round(+v).toLocaleString("vi-VN")} K ₫`}/>}/>
+              <Tooltip content={<DarkTip fmt={fmt}/>}/>
               <Legend wrapperStyle={{fontSize:10}}/>
               {[...VC,"ALL"].map(vv=>{
-                const isSel=selV===vv||(selV==="ALL"&&vv==="ALL");
+                const isSel=selV===vv||(selV==="ALL"&&vv==="ALL")||(selV==="ALL"&&vv!=="ALL");
+                const dimmed=selV!=="ALL"&&selV!==vv&&vv!=="ALL";
                 return <Line key={vv} dataKey={vv} name={vv==="ALL"?"Overall":vv}
-                  stroke={vv==="ALL"?"#64748b":VC_C[vv]} strokeWidth={isSel?2.5:1.5}
-                  opacity={selV==="ALL"||isSel?1:0.3} dot={{r:isSel?4:2,fill:vv==="ALL"?"#64748b":VC_C[vv],strokeWidth:0}} type="monotone" connectNulls/>;
+                  stroke={vv==="ALL"?"#64748b":VC_C[vv]} strokeWidth={selV===vv||(selV==="ALL")?2:1.5}
+                  opacity={dimmed?0.2:1} dot={{r:selV===vv||(selV==="ALL")?4:2,fill:vv==="ALL"?"#64748b":VC_C[vv],strokeWidth:0}}
+                  type="monotone" connectNulls/>;
               })}
             </LineChart>
           </ResponsiveContainer>
-        </Card>
-        {/* Bottom-left: VPL & LTV trend */}
-        <Card>
-          <ChartTitle sub="K ₫ — selected segment, all platforms">VPL & LTV Trend</ChartTitle>
-          <ResponsiveContainer width="100%" height={140}>
-            <LineChart data={trendData}>
-              <CartesianGrid stroke="#f1f5f9" vertical={false}/>
-              <XAxis dataKey="m" tick={{fontSize:9,fill:"#94a3b8"}} axisLine={false} tickLine={false}/>
-              <YAxis tick={{fontSize:9,fill:"#94a3b8"}} axisLine={false} tickLine={false}/>
-              <Tooltip content={<DarkTip fmt={(v:any)=>`${Math.round(+v).toLocaleString("vi-VN")} K ₫`}/>}/>
-              <Legend wrapperStyle={{fontSize:10}}/>
-              <Line dataKey="vpl" name="VPL (K₫)" stroke="#6366f1" strokeWidth={2} dot={{r:3,fill:"#6366f1",strokeWidth:0}}/>
-              <Line dataKey="ltv" name="LTV (K₫)" stroke="#8b5cf6" strokeWidth={2} strokeDasharray="4 2" dot={{r:3,fill:"#8b5cf6",strokeWidth:0}}/>
-            </LineChart>
-          </ResponsiveContainer>
-        </Card>
-        {/* Bottom-right: CAC trend */}
-        <Card>
-          <ChartTitle sub="K ₫ · lower = more efficient">Blended CAC Trend</ChartTitle>
-          <ResponsiveContainer width="100%" height={140}>
-            <AreaChart data={trendData}>
-              <CartesianGrid stroke="#f1f5f9" vertical={false}/>
-              <XAxis dataKey="m" tick={{fontSize:9,fill:"#94a3b8"}} axisLine={false} tickLine={false}/>
-              <YAxis tick={{fontSize:9,fill:"#94a3b8"}} axisLine={false} tickLine={false}/>
-              <Tooltip content={<DarkTip fmt={(v:any)=>`${Math.round(+v).toLocaleString("vi-VN")} K ₫`}/>}/>
-              <Area dataKey="cac" name="CAC (K₫)" stroke="#f59e0b" fill="#fef3c7" strokeWidth={2} fillOpacity={0.6}/>
-            </AreaChart>
-          </ResponsiveContainer>
-        </Card>
-      </div>
+        );
+        const fmtX=(v:any)=>`${v}×`;
+        const fmtK=(v:any)=>`${Math.round(+v||0).toLocaleString("vi-VN")} K ₫`;
+        // MoM badge helper
+        const MoM=({arr,k}:{arr:any[],k:string})=>{
+          const b=momBadge(arr,k);
+          if(!b) return null;
+          return <span style={{fontSize:10,fontWeight:700,color:b.up?"#10b981":"#ef4444",marginLeft:6}}>{b.str} MoM</span>;
+        };
+        return (
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:14}}>
+            <Card>
+              <div style={{display:"flex",alignItems:"center",marginBottom:12}}>
+                <div>
+                  <div style={{fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.06em",color:"#64748b"}}>LTV/CAC Monthly — By Vertical</div>
+                  <div style={{fontSize:11,color:"#94a3b8",fontStyle:"italic"}}>LTV ÷ CAC · target &gt;3.0×</div>
+                </div>
+                <MoM arr={ltvcacMonthly} k={selV==="ALL"?"ALL":selV}/>
+              </div>
+              <VLines data={ltvcacMonthly} fmt={fmtX}/>
+            </Card>
+            <Card>
+              <div style={{display:"flex",alignItems:"center",marginBottom:12}}>
+                <div>
+                  <div style={{fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.06em",color:"#64748b"}}>VPL Monthly — By Vertical (K ₫)</div>
+                  <div style={{fontSize:11,color:"#94a3b8",fontStyle:"italic"}}>Revenue per Lead · K ₫</div>
+                </div>
+                <MoM arr={vplMonthly} k={selV==="ALL"?"ALL":selV}/>
+              </div>
+              <VLines data={vplMonthly} fmt={fmtK}/>
+            </Card>
+            <Card>
+              <div style={{display:"flex",alignItems:"center",marginBottom:12}}>
+                <div>
+                  <div style={{fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.06em",color:"#64748b"}}>LTV Monthly — By Vertical (K ₫)</div>
+                  <div style={{fontSize:11,color:"#94a3b8",fontStyle:"italic"}}>Lifetime Value = LPU × VPL × {LS}M · K ₫</div>
+                </div>
+                <MoM arr={ltvMonthly} k={selV==="ALL"?"ALL":selV}/>
+              </div>
+              <VLines data={ltvMonthly} fmt={fmtK} h={150}/>
+            </Card>
+            <Card>
+              <div style={{display:"flex",alignItems:"center",marginBottom:12}}>
+                <div>
+                  <div style={{fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.06em",color:"#64748b"}}>Blended CAC Monthly — By Vertical (K ₫)</div>
+                  <div style={{fontSize:11,color:"#94a3b8",fontStyle:"italic"}}>Spend ÷ (MAU × {(NUR*100).toFixed(0)}% new users) · K ₫</div>
+                </div>
+                <MoM arr={cacMonthly} k={selV==="ALL"?"ALL":selV}/>
+              </div>
+              <VLines data={cacMonthly} fmt={fmtK} h={150}/>
+            </Card>
+          </div>
+        );
+      })()}
 
       {/* Cohort heatmap — M0, M1, M2, M3 with Web/App chip */}
       <Card style={{padding:0,overflow:"hidden"}}>
@@ -1177,20 +1195,9 @@ export default function Dashboard({liveData}:{liveData?:any}){
           <div style={{color:"#f8fafc",fontWeight:800,fontSize:15,letterSpacing:"-0.3px"}}>Chợ Tốt — MKT Finance Dashboard 2026</div>
           <div style={{color:"#475569",fontSize:11,marginTop:2}}>Two-sided Marketplace · Jan–May actual · Jun–Dec forecast</div>
         </div>
-        {/* Import CSV button — top right */}
-        <div style={{display:"flex",alignItems:"center",gap:8}}>
-          <span style={{fontSize:11,color:sync.status==="ok"?"#4ade80":sync.status==="error"?"#f87171":"#64748b"}}>
-            {lastSyncLabel}
-          </span>
-          <label title="Download CSV từ Google Sheets (File → Download → CSV) rồi click đây để import"
-            style={{display:"flex",alignItems:"center",gap:6,padding:"5px 12px",borderRadius:8,
-              border:"1px solid #2d3260",background:"#1e293b",cursor:"pointer",
-              fontSize:12,color:"#94a3b8",transition:"all .15s",lineHeight:1,userSelect:"none"}}>
-            <span>📂</span>
-            <span>Import CSV</span>
-            <input type="file" accept=".csv,text/csv" onChange={handleCSV} style={{display:"none"}}/>
-          </label>
-        </div>
+        <span style={{fontSize:11,color:sync.status==="ok"?"#4ade80":sync.status==="error"?"#f87171":"#64748b"}}>
+          {lastSyncLabel}
+        </span>
       </div>
       <div style={{background:"#fff",borderBottom:"1px solid #e2e8f0",padding:"0 24px",display:"flex",flexShrink:0}}>
         {tabs.map((t,i)=>(
