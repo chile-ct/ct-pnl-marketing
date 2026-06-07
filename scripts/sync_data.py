@@ -41,6 +41,7 @@ PROJECT_ID  = "chotot-data-platform"      # ← replace with your GCP project ID
 DATASET     = "mkt_reporting"             # ← replace with your BQ dataset
 OUTPUT      = Path(__file__).parent.parent / "public" / "data.json"
 VERTICALS   = ["PTY", "JOB", "VEH", "GDS"]
+VERTS       = ["PTY", "JOB", "VEH", "GDS", "PARENT"]
 MONTHS      = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
 
 # End of last Sunday (Vietnam UTC+7)
@@ -178,7 +179,7 @@ def pn(v):
 
 def parse_fc_cost(rows: list[list[str]]) -> dict:
     """Parse FC & Actual cost sheet into spend per vertical per month."""
-    VERTS = {"PTY","JOB","VEH","GDS","PARENT"}
+    _VERTS = set(VERTS)
     spend = {v: [0.0]*12 for v in VERTS}
     if not rows: return spend
     # Find month columns (header row has Jan/Feb/... or actual/forecast labels)
@@ -193,7 +194,7 @@ def parse_fc_cost(rows: list[list[str]]) -> dict:
     for row in rows[1:]:
         if len(row) < col_jan + 12: continue
         vert = str(row[0]).strip().upper()
-        if vert not in VERTS: continue
+        if vert not in _VERTS: continue
         for mi in range(12):
             v = pn(row[col_jan + mi])
             m = v / 1_000_000 if v > 100_000 else v
