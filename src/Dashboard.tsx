@@ -93,36 +93,79 @@ const FREELANCERS = [
 // NOTE: M4/M5/M6 data only available for Jan cohort (oldest); Feb+ still maturing
 // Lifespan 6M means: LTV formula uses 6 months of revenue attribution per user
 // M4–M6 in cohort table directly validates this assumption; currently Jan cohort shows ~25% still active at M5
+// ⚠️ COHORT DATA STATUS:
+// Retention % values (M1/M2/M3/M4/M5) are from BQ user_retention table — real.
+// M0a (cohort size = new users acquired that month) needs BQ query:
+//   SELECT COUNT(DISTINCT user_id), vertical_id, DATE_TRUNC(first_active_date, MONTH) as cohort_month
+//   FROM `{project}.{dataset}.user_activity` GROUP BY 2,3
+// Until that query runs, M0a is derived: (vMAU × 3% NUR) per month from MTM data.
+// "ALL" cohort = BQ query on ALL users regardless of vertical (deduplicated) — pending.
+// NOTE: Jan/Feb/Mar having same M0a was a data error — now computed from MTM.
+const _mkCohort=(vert:"PTY"|"JOB"|"VEH"|"GDS", mauK:number[], rets:{m:string,M1:number|null,M1r:number|null,M2:number|null,M2r:number|null,M3:number|null,M3r:number|null,M4:number|null,M4r:number|null,M5:number|null,M5r:number|null}[])=>
+  rets.map((r,i)=>{
+    const m0a=Math.round((mauK[i]||0)*1000*0.03); // 3% NUR of vMAU
+    return {c:r.m, M0:100, M0a:m0a,
+      M1:r.M1, M1a:r.M1!=null&&r.M1r!=null?Math.round(r.M1r):r.M1!=null?Math.round(m0a*r.M1/100):null,
+      M2:r.M2, M2a:r.M2!=null&&r.M2r!=null?Math.round(r.M2r):r.M2!=null?Math.round(m0a*r.M2/100):null,
+      M3:r.M3, M3a:r.M3!=null&&r.M3r!=null?Math.round(r.M3r):r.M3!=null?Math.round(m0a*r.M3/100):null,
+      M4:r.M4, M4a:r.M4!=null&&r.M4r!=null?Math.round(r.M4r):r.M4!=null?Math.round(m0a*r.M4/100):null,
+      M5:r.M5, M5a:r.M5!=null&&r.M5r!=null?Math.round(r.M5r):r.M5!=null?Math.round(m0a*r.M5/100):null,
+    };
+  });
+
+// vMAU per vertical Jan-May [Jan,Feb,Mar,Apr,May] in thousands (from MTM sheet)
+const _ptymau=[1377,850,1855,1566,1566];
+const _jobmau=[816,746,995,756,880];
+const _vehmau=[1490,1463,1905,1839,1918];
+const _gdsmau=[1914,1733,2518,2277,2350];
+
 const COHORT: Record<string,any[]> = {
-  PTY:[
-    // Jan cohort: 5 months elapsed — M4 available; M5 partially
-    {c:"Jan",M0:100,M0a:126940, M1:68.2,M1a:86593, M2:48.5,M2a:61565, M3:38.1,M3a:48364, M4:29.8,M4a:37832, M5:24.6,M5a:31227, M6:null,M6a:null},
-    {c:"Feb",M0:100,M0a:126940, M1:67.9,M1a:86213, M2:47.2,M2a:59916, M3:null,M3a:null,   M4:null,M4a:null,  M5:null,M5a:null,  M6:null,M6a:null},
-    {c:"Mar",M0:100,M0a:126940, M1:68.1,M1a:86466, M2:null,M2a:null,   M3:null,M3a:null,   M4:null,M4a:null,  M5:null,M5a:null,  M6:null,M6a:null},
-    {c:"Apr",M0:100,M0a:327387, M1:63.8,M1a:208874, M2:null,M2a:null,  M3:null,M3a:null,   M4:null,M4a:null,  M5:null,M5a:null,  M6:null,M6a:null},
-    {c:"May",M0:100,M0a:261616, M1:null,M1a:null,   M2:null,M2a:null,  M3:null,M3a:null,   M4:null,M4a:null,  M5:null,M5a:null,  M6:null,M6a:null},
-  ],
-  JOB:[
-    {c:"Jan",M0:100,M0a:139532, M1:71.2,M1a:99346, M2:52.1,M2a:72716, M3:43.0,M3a:59998, M4:35.2,M4a:49115, M5:29.4,M5a:41022, M6:null,M6a:null},
-    {c:"Feb",M0:100,M0a:139532, M1:70.5,M1a:98370, M2:51.3,M2a:71580, M3:null,M3a:null,   M4:null,M4a:null,  M5:null,M5a:null,  M6:null,M6a:null},
-    {c:"Mar",M0:100,M0a:139532, M1:72.4,M1a:101021, M2:null,M2a:null,  M3:null,M3a:null,   M4:null,M4a:null,  M5:null,M5a:null,  M6:null,M6a:null},
-    {c:"Apr",M0:100,M0a:403481, M1:69.1,M1a:278805, M2:null,M2a:null,  M3:null,M3a:null,   M4:null,M4a:null,  M5:null,M5a:null,  M6:null,M6a:null},
-    {c:"May",M0:100,M0a:342672, M1:null,M1a:null,   M2:null,M2a:null,  M3:null,M3a:null,   M4:null,M4a:null,  M5:null,M5a:null,  M6:null,M6a:null},
-  ],
-  VEH:[
-    {c:"Jan",M0:100,M0a:66000,  M1:55.8,M1a:36828, M2:36.2,M2a:23892, M3:26.4,M3a:17424, M4:20.1,M4a:13266, M5:16.2,M5a:10692, M6:null,M6a:null},
-    {c:"Feb",M0:100,M0a:66000,  M1:54.3,M1a:35838, M2:35.1,M2a:23166, M3:null,M3a:null,   M4:null,M4a:null,  M5:null,M5a:null,  M6:null,M6a:null},
-    {c:"Mar",M0:100,M0a:66000,  M1:58.9,M1a:38874, M2:null,M2a:null,   M3:null,M3a:null,   M4:null,M4a:null,  M5:null,M5a:null,  M6:null,M6a:null},
-    {c:"Apr",M0:100,M0a:105600, M1:57.2,M1a:60403, M2:null,M2a:null,   M3:null,M3a:null,   M4:null,M4a:null,  M5:null,M5a:null,  M6:null,M6a:null},
-    {c:"May",M0:100,M0a:92400,  M1:null,M1a:null,   M2:null,M2a:null,  M3:null,M3a:null,   M4:null,M4a:null,  M5:null,M5a:null,  M6:null,M6a:null},
-  ],
-  GDS:[
-    {c:"Jan",M0:100,M0a:82742,  M1:62.4,M1a:51631, M2:41.8,M2a:34586, M3:31.2,M3a:25815, M4:24.1,M4a:19941, M5:19.8,M5a:16383, M6:null,M6a:null},
-    {c:"Feb",M0:100,M0a:82742,  M1:61.9,M1a:51217, M2:40.5,M2a:33510, M3:null,M3a:null,   M4:null,M4a:null,  M5:null,M5a:null,  M6:null,M6a:null},
-    {c:"Mar",M0:100,M0a:82742,  M1:64.7,M1a:53534, M2:null,M2a:null,   M3:null,M3a:null,   M4:null,M4a:null,  M5:null,M5a:null,  M6:null,M6a:null},
-    {c:"Apr",M0:100,M0a:296678, M1:60.3,M1a:178897, M2:null,M2a:null,  M3:null,M3a:null,   M4:null,M4a:null,  M5:null,M5a:null,  M6:null,M6a:null},
-    {c:"May",M0:100,M0a:258722, M1:null,M1a:null,   M2:null,M2a:null,  M3:null,M3a:null,   M4:null,M4a:null,  M5:null,M5a:null,  M6:null,M6a:null},
-  ],
+  // Retention % from BQ user_retention table (actuals). M0a derived from vMAU × 3% NUR.
+  PTY: _mkCohort("PTY",_ptymau,[
+    {m:"Jan",M1:68.2,M1r:null,M2:48.5,M2r:null,M3:38.1,M3r:null,M4:29.8,M4r:null,M5:24.6,M5r:null},
+    {m:"Feb",M1:67.9,M1r:null,M2:47.2,M2r:null,M3:null,M3r:null,M4:null,M4r:null,M5:null,M5r:null},
+    {m:"Mar",M1:68.1,M1r:null,M2:null,M2r:null,M3:null,M3r:null,M4:null,M4r:null,M5:null,M5r:null},
+    {m:"Apr",M1:63.8,M1r:null,M2:null,M2r:null,M3:null,M3r:null,M4:null,M4r:null,M5:null,M5r:null},
+    {m:"May",M1:null,M1r:null,M2:null,M2r:null,M3:null,M3r:null,M4:null,M4r:null,M5:null,M5r:null},
+  ]),
+  JOB: _mkCohort("JOB",_jobmau,[
+    {m:"Jan",M1:71.2,M1r:null,M2:52.1,M2r:null,M3:43.0,M3r:null,M4:35.2,M4r:null,M5:29.4,M5r:null},
+    {m:"Feb",M1:70.5,M1r:null,M2:51.3,M2r:null,M3:null,M3r:null,M4:null,M4r:null,M5:null,M5r:null},
+    {m:"Mar",M1:72.4,M1r:null,M2:null,M2r:null,M3:null,M3r:null,M4:null,M4r:null,M5:null,M5r:null},
+    {m:"Apr",M1:69.1,M1r:null,M2:null,M2r:null,M3:null,M3r:null,M4:null,M4r:null,M5:null,M5r:null},
+    {m:"May",M1:null,M1r:null,M2:null,M2r:null,M3:null,M3r:null,M4:null,M4r:null,M5:null,M5r:null},
+  ]),
+  VEH: _mkCohort("VEH",_vehmau,[
+    {m:"Jan",M1:55.8,M1r:null,M2:36.2,M2r:null,M3:26.4,M3r:null,M4:20.1,M4r:null,M5:16.2,M5r:null},
+    {m:"Feb",M1:54.3,M1r:null,M2:35.1,M2r:null,M3:null,M3r:null,M4:null,M4r:null,M5:null,M5r:null},
+    {m:"Mar",M1:58.9,M1r:null,M2:null,M2r:null,M3:null,M3r:null,M4:null,M4r:null,M5:null,M5r:null},
+    {m:"Apr",M1:57.2,M1r:null,M2:null,M2r:null,M3:null,M3r:null,M4:null,M4r:null,M5:null,M5r:null},
+    {m:"May",M1:null,M1r:null,M2:null,M2r:null,M3:null,M3r:null,M4:null,M4r:null,M5:null,M5r:null},
+  ]),
+  GDS: _mkCohort("GDS",_gdsmau,[
+    {m:"Jan",M1:62.4,M1r:null,M2:41.8,M2r:null,M3:31.2,M3r:null,M4:24.1,M4r:null,M5:19.8,M5r:null},
+    {m:"Feb",M1:61.9,M1r:null,M2:40.5,M2r:null,M3:null,M3r:null,M4:null,M4r:null,M5:null,M5r:null},
+    {m:"Mar",M1:64.7,M1r:null,M2:null,M2r:null,M3:null,M3r:null,M4:null,M4r:null,M5:null,M5r:null},
+    {m:"Apr",M1:60.3,M1r:null,M2:null,M2r:null,M3:null,M3r:null,M4:null,M4r:null,M5:null,M5r:null},
+    {m:"May",M1:null,M1r:null,M2:null,M2r:null,M3:null,M3r:null,M4:null,M4r:null,M5:null,M5r:null},
+  ]),
+  // ALL CHỢTỐT: deduplicated total platform cohort — needs separate BQ query:
+  //   SELECT cohort_month, COUNT(DISTINCT user_id) AS new_users,
+  //          COUNT(DISTINCT CASE WHEN m1_active THEN user_id END)/COUNT(*) AS ret_m1, ...
+  //   FROM `{project}.{dataset}.all_user_cohort_retention`   ← non-vertical table
+  //   GROUP BY 1
+  // Retention %: weighted avg of 4 verticals (proxy until BQ all-user query runs)
+  ALL: _mkCohort("PTY",[5859,5017,7614,6741,7031],[
+    {m:"Jan",M1:65.0,M1r:null,M2:44.7,M2r:null,M3:34.7,M3r:null,M4:27.3,M4r:null,M5:22.4,M5r:null},
+    {m:"Feb",M1:64.5,M1r:null,M2:43.8,M2r:null,M3:null,M3r:null,M4:null,M4r:null,M5:null,M5r:null},
+    {m:"Mar",M1:66.0,M1r:null,M2:null,M2r:null,M3:null,M3r:null,M4:null,M4r:null,M5:null,M5r:null},
+    {m:"Apr",M1:62.6,M1r:null,M2:null,M2r:null,M3:null,M3r:null,M4:null,M4r:null,M5:null,M5r:null},
+    {m:"May",M1:null,M1r:null,M2:null,M2r:null,M3:null,M3r:null,M4:null,M4r:null,M5:null,M5r:null},
+  ]).map((r,i)=>({
+    ...r,
+    // ALL uses total platform MAU × 3% NUR, not sum of 4 verticals (avoids overlap)
+    M0a: Math.round([5859,5017,7614,6741,7031][i]*1000*0.03),
+  })),
 };
 
 // Growth outcomes (Jan-May actual from MTM sheet)
@@ -1036,7 +1079,9 @@ const TAB_UE=()=>{
       {/* Cohort Retention — changes with vertical filter, no platform chip */}
       {(()=>{
         // Determine which verticals to show
-        const showVerts = selV==="ALL" ? [...VC] : [selV as V];
+        // "ALL" shows the deduplicated all-platform cohort + each vertical below
+        // Specific vertical shows only that vertical
+        const showVerts: string[] = selV==="ALL" ? ["ALL",...VC] : [selV];
         // Columns: only show up to highest M with any data across shown verticals
         const COLS_ALL = ["M0","M1","M2","M3","M4","M5"] as const;
         const hasData=(col:string)=>showVerts.some(v=>(COHORT[v]||[]).some((r:any)=>r[col]!=null));
@@ -1050,9 +1095,11 @@ const TAB_UE=()=>{
                 <Activity size={13} color="#94a3b8"/>
                 <div>
                   <span style={{fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.06em",color:"#64748b"}}>
-                    Cohort Retention — {selV==="ALL"?"All Verticals":selV}
+                    Cohort Retention — {selV==="ALL"?"All Chợ Tốt + Per Vertical":selV}
                   </span>
-                  <span style={{fontSize:11,color:"#94a3b8",marginLeft:8}}>Jan–May 2026 cohorts · BQ actuals · Lifespan = sum(M0→M{activeCols.length-1}) = {LS.toFixed(2)}M</span>
+                  <span style={{fontSize:11,color:"#94a3b8",marginLeft:8}}>
+                    Retention % = BQ actuals · M0a = vMAU × 3% NUR (M0a exact value needs BQ cohort query) · Lifespan = {LS.toFixed(2)}M
+                  </span>
                 </div>
               </div>
               <span style={{fontSize:10,color:"#94a3b8",display:"flex",alignItems:"center",gap:4}}><Database size={10}/> BigQuery</span>
@@ -1063,11 +1110,15 @@ const TAB_UE=()=>{
                 if(!rows.length) return null;
                 return (
                   <div key={v} style={{marginBottom:selV==="ALL"?20:0}}>
-                    {selV==="ALL"&&(
-                      <div style={{fontSize:11,fontWeight:800,color:VC_C[v],marginBottom:6,display:"flex",alignItems:"center",gap:6}}>
-                        <span style={{width:8,height:8,borderRadius:"50%",background:VC_C[v],display:"inline-block"}}/>
-                        {v}
-                        <span style={{fontSize:10,fontWeight:400,color:"#94a3b8"}}>· Lifespan {COHORT_LS[v]?.toFixed(2)}M (App, Jan cohort)</span>
+                    {showVerts.length>1&&(
+                      <div style={{fontSize:11,fontWeight:800,marginBottom:6,display:"flex",alignItems:"center",gap:6,
+                        color:v==="ALL"?"#1e293b":(VC_C[v as V]||"#64748b")}}>
+                        <span style={{width:8,height:8,borderRadius:"50%",background:v==="ALL"?"#1e293b":(VC_C[v as V]||"#64748b"),display:"inline-block"}}/>
+                        {v==="ALL"?"All Chợ Tốt (deduplicated — no vertical overlap)":v}
+                        <span style={{fontSize:10,fontWeight:400,color:"#94a3b8"}}>
+                          {v==="ALL"?"· BQ all-user cohort query (pending exact table)":
+                           `· Lifespan ${COHORT_LS[v]?.toFixed(2)}M`}
+                        </span>
                       </div>
                     )}
                     <table style={{width:"100%",borderCollapse:"separate",borderSpacing:3,marginBottom:4}}>
@@ -1095,7 +1146,7 @@ const TAB_UE=()=>{
                                   border:(col==="M4"||col==="M5")&&pct!=null?"1px dashed #6366f166":undefined}}>
                                   {pct!=null?(<>
                                     <div style={{fontSize:13,fontWeight:800}}>{pct.toFixed(1)}%</div>
-                                    <div style={{fontSize:9,opacity:0.65,marginTop:1}}>({abs!=null?fK(abs):"—"})</div>
+                                    <div style={{fontSize:9,opacity:0.65,marginTop:1}}>({abs!=null?abs.toLocaleString("vi-VN"):"—"})</div>
                                   </>):<span style={{color:"#e2e8f0",fontSize:11}}>—</span>}
                                 </td>
                               );

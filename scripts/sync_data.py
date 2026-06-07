@@ -111,10 +111,11 @@ ORDER BY 2, 1
 # QUERY 3: Cohort retention M0→M6 per vertical
 # ─────────────────────────────────────────────────────────────────────
 COHORT_SQL = f"""
+-- Per-vertical cohort retention (M0 = actual new user cohort size from BQ)
 SELECT
   vertical_id                                  AS vertical,
   FORMAT_DATE('%b', cohort_month)              AS cohort,
-  cohort_size                                  AS M0a,
+  cohort_size                                  AS M0a,     -- exact new-user count, no rounding
   ROUND(ret_m1 * 100, 1)                       AS M1,
   ROUND(ret_m1 * cohort_size)                  AS M1a,
   ROUND(ret_m2 * 100, 1)                       AS M2,
@@ -124,13 +125,33 @@ SELECT
   ROUND(ret_m4 * 100, 1)                       AS M4,
   ROUND(ret_m4 * cohort_size)                  AS M4a,
   ROUND(ret_m5 * 100, 1)                       AS M5,
-  ROUND(ret_m5 * cohort_size)                  AS M5a,
-  ROUND(ret_m6 * 100, 1)                       AS M6,
-  ROUND(ret_m6 * cohort_size)                  AS M6a
+  ROUND(ret_m5 * cohort_size)                  AS M5a
 FROM `{PROJECT_ID}.{DATASET}.user_cohort_retention`
-WHERE
-  EXTRACT(YEAR FROM cohort_month) = {YEAR}
+WHERE EXTRACT(YEAR FROM cohort_month) = {YEAR}
 ORDER BY cohort_month, vertical_id
+"""
+
+# All Chợ Tốt cohort — deduplicated, no vertical segmentation to avoid overlap
+# Users counted once even if active in multiple verticals
+COHORT_ALL_SQL = f"""
+SELECT
+  'ALL'                                        AS vertical,
+  FORMAT_DATE('%b', cohort_month)              AS cohort,
+  COUNT(DISTINCT user_id)                      AS M0a,
+  ROUND(SUM(CASE WHEN m1_active THEN 1 ELSE 0 END) * 100.0 / COUNT(*), 1) AS M1,
+  SUM(CASE WHEN m1_active THEN 1 ELSE 0 END)  AS M1a,
+  ROUND(SUM(CASE WHEN m2_active THEN 1 ELSE 0 END) * 100.0 / COUNT(*), 1) AS M2,
+  SUM(CASE WHEN m2_active THEN 1 ELSE 0 END)  AS M2a,
+  ROUND(SUM(CASE WHEN m3_active THEN 1 ELSE 0 END) * 100.0 / COUNT(*), 1) AS M3,
+  SUM(CASE WHEN m3_active THEN 1 ELSE 0 END)  AS M3a,
+  ROUND(SUM(CASE WHEN m4_active THEN 1 ELSE 0 END) * 100.0 / COUNT(*), 1) AS M4,
+  SUM(CASE WHEN m4_active THEN 1 ELSE 0 END)  AS M4a,
+  ROUND(SUM(CASE WHEN m5_active THEN 1 ELSE 0 END) * 100.0 / COUNT(*), 1) AS M5,
+  SUM(CASE WHEN m5_active THEN 1 ELSE 0 END)  AS M5a
+FROM `{PROJECT_ID}.{DATASET}.all_user_cohort`   -- ⚠️ update table name to match your BQ schema
+WHERE EXTRACT(YEAR FROM cohort_month) = {YEAR}
+GROUP BY cohort_month
+ORDER BY cohort_month
 """
 
 # ─────────────────────────────────────────────────────────────────────
