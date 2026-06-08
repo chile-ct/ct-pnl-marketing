@@ -1,0 +1,52 @@
+name: Daily Data Sync
+
+on:
+  schedule:
+    # 10:00 AM ICT = 03:00 UTC every day
+    - cron: '0 3 * * *'
+  workflow_dispatch:  # manual trigger
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - run: pip install google-cloud-bigquery google-auth requests
+
+      - name: Sync data
+        env:
+          GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
+          # Optional: if Sheets not public, set these to published CSV URLs
+          # SHEETS_CSV_URL: ${{ secrets.SHEETS_CSV_URL }}
+          # MTM_CSV_URL: ${{ secrets.MTM_CSV_URL }}
+        run: python scripts/sync_data.py
+
+      - name: Commit data + deploy to gh-pages
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add public/data.json
+          git diff --staged --quiet && echo "No data changes" || \
+            git commit -m "data: sync $(date -u +'%Y-%m-%d %H:%M UTC') [auto]"
+          git push origin main
+
+          # Deploy dashboard.html + data to gh-pages branch
+          mkdir -p _deploy
+          cp dashboard.html _deploy/index.html
+          cp -r public/ _deploy/public/
+          cd _deploy
+          git init
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -b gh-pages
+          git add .
+          git commit -m "deploy: $(date -u +'%Y-%m-%d %H:%M UTC')"
+          git push --force "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" gh-pages
