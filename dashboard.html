@@ -652,6 +652,9 @@ body{font-family:var(--font-ui);background:var(--bg);color:var(--text);font-size
       </div>
     </div>
 
+    <!-- Cost Detail by Vertical (2 tables per row, grouped by Objective) -->
+    <div id="cost-detail-by-vert-grid" style="margin-bottom:20px"></div>
+
     <!-- Cost detail by track (consolidated, filterable) -->
     <div class="card mb-24">
       <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:14px">
@@ -1356,6 +1359,9 @@ function renderCostDetail() {
     </div>`;
   };
 
+  const VERT_ORDER_CD = ['PTY','JOB','VEH','GDS'];
+  const VC_CD = {PTY:'var(--pty)',JOB:'var(--job)',VEH:'var(--veh)',GDS:'var(--gds)'};
+
   if (hasActData) {
     let allRows = activityRows.filter(r => {
       if (filtTrack !== 'ALL' && (r.team||'') !== filtTrack) return false;
@@ -1366,57 +1372,71 @@ function renderCostDetail() {
       detailEl.innerHTML = `<div style="padding:16px;color:var(--text-faint);font:400 12px/1.5 var(--font-ui)">Không có data. Paste dữ liệu vào bảng Activity bên tab Data Input.</div>`;
       return;
     }
-    costDetailPage = Math.min(costDetailPage, Math.ceil(allRows.length/PAGE_SIZE)-1);
-    const rows = allRows.slice(costDetailPage*PAGE_SIZE, costDetailPage*PAGE_SIZE+PAGE_SIZE);
+    // Sort by vertical order, then insert group headers
+    const byVert = {};
+    VERT_ORDER_CD.forEach(v=>byVert[v]=[]);
+    allRows.forEach(r=>{ const v=(r.vert||'').toUpperCase(); if(byVert[v]) byVert[v].push(r); else { if(!byVert['OTHER'])byVert['OTHER']=[]; byVert['OTHER'].push(r); } });
+    const sorted = VERT_ORDER_CD.flatMap(v=>byVert[v]||[]).concat(byVert['OTHER']||[]);
+    costDetailPage = Math.min(costDetailPage, Math.max(0, Math.ceil(sorted.length/PAGE_SIZE)-1));
+    const pageRows = sorted.slice(costDetailPage*PAGE_SIZE, costDetailPage*PAGE_SIZE+PAGE_SIZE);
     const months5 = MONTHS.slice(0, ACT);
+    // Build rows with group headers
+    let prevVert = null;
+    const rowsHtml = pageRows.map(row => {
+      const v = (row.vert||'').toUpperCase();
+      const vc = VC_CD[v]||'var(--text)';
+      let hdr = '';
+      if (v !== prevVert) {
+        prevVert = v;
+        hdr = `<tr style="background:var(--navy-05,#f5f7f9)"><td colspan="${3+ACT+1}" style="text-align:left;font:700 10px/1.6 var(--font-ui);color:${vc};padding:4px 8px;letter-spacing:.3px">${v}</td></tr>`;
+      }
+      const mVals = row.months.slice(0,ACT).map(v => fmtM(v));
+      const total = row.months.slice(0,ACT).reduce((s,v)=>s+v,0);
+      return hdr + `<tr>
+        <td style="text-align:left;font-size:11px;white-space:normal;padding-left:12px">${row.activities}</td>
+        <td style="text-align:left;font-size:11px">${row.contract}</td>
+        <td style="text-align:left"><span style="padding:1px 6px;border-radius:4px;font:600 9px/1.5 var(--font-ui);background:${(row.costType||'').toLowerCase().includes('non')?'var(--navy-10)':'var(--green-bg)'};color:${(row.costType||'').toLowerCase().includes('non')?'var(--navy-60)':'#00843D'}">${row.costType}</span></td>
+        ${mVals.map(v=>`<td style="color:${v?'var(--text)':'var(--text-faint)'}">${v||'—'}</td>`).join('')}
+        <td style="font-weight:700;color:var(--text)">${total ? fmtM(total) : '—'}</td>
+      </tr>`;
+    }).join('');
     detailEl.innerHTML = `
     <div style="overflow-x:auto">
-    <table class="itable" style="min-width:820px">
+    <table class="itable" style="min-width:760px">
       <thead><tr>
-        <th style="text-align:left;width:55px">Vertical</th>
-        <th style="text-align:left;width:180px">Activity</th>
+        <th style="text-align:left;width:200px">Activity</th>
         <th style="text-align:left;width:80px">Contract</th>
         <th style="text-align:left;width:70px">Cost type</th>
         ${months5.map(m=>`<th>${m}</th>`).join('')}
         <th style="font-weight:700">Total</th>
       </tr></thead>
-      <tbody>
-      ${rows.map(row => {
-        const tClr = TRACK_CLR[row.team] || 'var(--text-light)';
-        const mVals = row.months.slice(0,ACT).map(v => fmtM(v));
-        const total = row.months.slice(0,ACT).reduce((s,v)=>s+v,0);
-        return `<tr>
-          <td style="text-align:left"><span class="vtag vtag-${(row.vert||'').toLowerCase()}">${row.vert}</span></td>
-          <td style="text-align:left;font-size:11px;white-space:normal;padding-left:6px">${row.activities}</td>
-          <td style="text-align:left;font-size:11px">${row.contract}</td>
-          <td style="text-align:left"><span style="padding:1px 6px;border-radius:4px;font:600 9px/1.5 var(--font-ui);background:${(row.costType||'').toLowerCase().includes('non')?'var(--navy-10)':'var(--green-bg)'};color:${(row.costType||'').toLowerCase().includes('non')?'var(--navy-60)':'#00843D'}">${row.costType}</span></td>
-          ${mVals.map(v=>`<td style="color:${v?'var(--text)':'var(--text-faint)'}">${v||'—'}</td>`).join('')}
-          <td style="font-weight:700;color:var(--text)">${total ? fmtM(total) : '—'}</td>
-        </tr>`;
-      }).join('')}
-      </tbody>
+      <tbody>${rowsHtml}</tbody>
     </table></div>
-    ${renderPager(costDetailPage, allRows.length)}`;
+    ${renderPager(costDetailPage, sorted.length)}`;
   } else {
     let items = HC_DATA;
     if (filtVert !== 'ALL') items = items.filter(r => r[2] === filtVert);
     if (filtTrack !== 'ALL') items = items.filter(r => r[1] === filtTrack);
     if (!items.length) { detailEl.innerHTML = `<div style="padding:16px;color:var(--text-faint);font:400 12px/1.5 var(--font-ui)">Không có data.</div>`; return; }
-    costDetailPage = Math.min(costDetailPage, Math.ceil(items.length/PAGE_SIZE)-1);
-    const pageItems = items.slice(costDetailPage*PAGE_SIZE, costDetailPage*PAGE_SIZE+PAGE_SIZE);
+    // Sort by vertical order
+    const sorted2 = [...VERT_ORDER_CD.flatMap(v=>items.filter(r=>r[2]===v)), ...items.filter(r=>!VERT_ORDER_CD.includes(r[2]))];
+    costDetailPage = Math.min(costDetailPage, Math.max(0, Math.ceil(sorted2.length/PAGE_SIZE)-1));
+    const pageItems = sorted2.slice(costDetailPage*PAGE_SIZE, costDetailPage*PAGE_SIZE+PAGE_SIZE);
+    let prevV2 = null;
     const rows2 = pageItems.map(([n,track,vert,type,amt,desc,contract])=>{
-      return `<tr>
-        <td style="text-align:left"><span class="vtag vtag-${vert.toLowerCase()}">${vert}</span></td>
-        <td style="text-align:left;font-size:11px">${n}</td>
+      const vc = VC_CD[vert]||'var(--text)';
+      let hdr = '';
+      if (vert !== prevV2) { prevV2=vert; hdr=`<tr style="background:var(--navy-05,#f5f7f9)"><td colspan="5" style="text-align:left;font:700 10px/1.6 var(--font-ui);color:${vc};padding:4px 8px;letter-spacing:.3px">${vert}</td></tr>`; }
+      return hdr+`<tr>
+        <td style="text-align:left;font-size:11px;padding-left:12px">${n}</td>
         <td style="text-align:left;font-size:11px">${contract||''}</td>
         <td style="text-align:left"><span style="padding:1px 6px;border-radius:4px;font:600 9px/1.5 var(--font-ui);background:${type==='working'?'var(--green-bg)':'var(--navy-10)'};color:${type==='working'?'#00843D':'var(--navy-60)'}">${type}</span></td>
         <td style="font:600 12px/1 var(--font-ui);color:var(--text)">${amt.toFixed(1)} M đ</td>
         <td style="font-size:10px;color:var(--text-light)">${desc||''}</td>
       </tr>`;
     }).join('');
-    detailEl.innerHTML = `<div style="overflow-x:auto"><table class="itable" style="min-width:680px">
+    detailEl.innerHTML = `<div style="overflow-x:auto"><table class="itable" style="min-width:620px">
       <thead><tr>
-        <th style="text-align:left">Vertical</th>
         <th style="text-align:left">Name</th>
         <th style="text-align:left">Contract</th>
         <th style="text-align:left">Type</th>
@@ -1425,10 +1445,115 @@ function renderCostDetail() {
       </tr></thead>
       <tbody>${rows2}</tbody>
     </table></div>
-    ${renderPager(costDetailPage, items.length)}`;
+    ${renderPager(costDetailPage, sorted2.length)}`;
   }
 }
 function _resetCostDetailPage() { costDetailPage = 0; }
+
+function renderCostDetailByVert() {
+  const el = document.getElementById('cost-detail-by-vert-grid');
+  if (!el) return;
+  const fmtM = v => { if (!v) return '—'; const m=v/1e6; return (m>=100?Math.round(m):+m.toFixed(1))+'M'; };
+  const months5 = MONTHS.slice(0, ACT);
+  const VERT_ORDER = ['PTY','JOB','VEH','GDS'];
+
+  const hasActData = activityRows.some(r => r.months.some(m => m > 0));
+
+  const makeVertTable = (vert, rows) => {
+    // Group by objective
+    const objMap = {};
+    rows.forEach(r => {
+      const obj = r.objective || 'Other';
+      if (!objMap[obj]) objMap[obj] = [];
+      objMap[obj].push(r);
+    });
+    const objs = Object.keys(objMap);
+    let tbody = '';
+    objs.forEach(obj => {
+      tbody += `<tr style="background:var(--navy-05,#f5f7f9)">
+        <td colspan="${3+ACT+1}" style="text-align:left;font:700 10px/1.6 var(--font-ui);color:var(--navy-60);padding:4px 8px;letter-spacing:.3px;text-transform:uppercase">${obj}</td>
+      </tr>`;
+      objMap[obj].forEach(row => {
+        const total = row.months.slice(0,ACT).reduce((s,v)=>s+v,0);
+        tbody += `<tr>
+          <td style="text-align:left;font-size:11px;white-space:normal;padding-left:12px">${row.activities||row.name||''}</td>
+          <td style="text-align:left;font-size:10px">${row.contract||''}</td>
+          <td style="text-align:left"><span style="padding:1px 5px;border-radius:4px;font:600 9px/1.5 var(--font-ui);background:${(row.costType||'').toLowerCase().includes('non')?'var(--navy-10)':'var(--green-bg)'};color:${(row.costType||'').toLowerCase().includes('non')?'var(--navy-60)':'#00843D'}">${row.costType||''}</span></td>
+          ${row.months.slice(0,ACT).map(v=>`<td style="color:${v?'var(--text)':'var(--text-faint)'}">${fmtM(v)}</td>`).join('')}
+          <td style="font-weight:700">${fmtM(total)}</td>
+        </tr>`;
+      });
+    });
+    const vc = {PTY:'var(--pty)',JOB:'var(--job)',VEH:'var(--veh)',GDS:'var(--gds)'}[vert]||'var(--text)';
+    return `<div class="card" style="margin-bottom:0">
+      <div style="font:700 12px/1 var(--font-ui);color:${vc};margin-bottom:10px">${vert}</div>
+      <div style="overflow-x:auto">
+      <table class="itable" style="min-width:520px">
+        <thead><tr>
+          <th style="text-align:left">Activity</th>
+          <th style="text-align:left;width:80px">Contract</th>
+          <th style="text-align:left;width:70px">Cost Type</th>
+          ${months5.map(m=>`<th>${m}</th>`).join('')}
+          <th style="font-weight:700">Total</th>
+        </tr></thead>
+        <tbody>${tbody}</tbody>
+      </table></div>
+    </div>`;
+  };
+
+  if (hasActData) {
+    const vertRows = {};
+    VERT_ORDER.forEach(v => vertRows[v] = []);
+    activityRows.forEach(r => {
+      const v = (r.vert||'').toUpperCase();
+      if (vertRows[v] && r.months.some(m=>m>0)) vertRows[v].push(r);
+    });
+    const cards = VERT_ORDER.filter(v => vertRows[v].length > 0).map(v => makeVertTable(v, vertRows[v]));
+    if (!cards.length) { el.innerHTML=''; return; }
+    // 2-per-row grid
+    let html = `<div style="margin-bottom:8px"><div class="chart-title">Cost Detail by Vertical — from FC &amp; Actual</div></div>`;
+    html += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">`;
+    html += cards.join('');
+    html += `</div>`;
+    el.innerHTML = html;
+  } else {
+    // HC_DATA fallback: [name, track, vert, type, amt, desc, contract]
+    const vertRows = {};
+    VERT_ORDER.forEach(v => vertRows[v] = []);
+    HC_DATA.forEach(([name,track,vert,type,amt,desc,contract]) => {
+      if (vertRows[vert]) vertRows[vert].push({activities:name, contract, costType:type, objective:track, months:Array(12).fill(0).map((_,i)=>i<ACT?amt*1e6/ACT:0)});
+    });
+    const makeHCTable = (vert, rows) => {
+      const objMap = {};
+      rows.forEach(r=>{const o=r.objective||'Other'; if(!objMap[o])objMap[o]=[]; objMap[o].push(r);});
+      let tbody='';
+      Object.keys(objMap).forEach(obj=>{
+        tbody+=`<tr style="background:var(--navy-05,#f5f7f9)"><td colspan="${3+ACT+1}" style="text-align:left;font:700 10px/1.6 var(--font-ui);color:var(--navy-60);padding:4px 8px;letter-spacing:.3px;text-transform:uppercase">${obj}</td></tr>`;
+        objMap[obj].forEach(row=>{
+          const amt=row.months.slice(0,ACT).reduce((s,v)=>s+(v||0),0);
+          tbody+=`<tr>
+            <td style="text-align:left;font-size:11px;padding-left:12px">${row.activities}</td>
+            <td style="font-size:10px;text-align:left">${row.contract||''}</td>
+            <td><span style="padding:1px 5px;border-radius:4px;font:600 9px/1.5 var(--font-ui);background:${(row.costType||'').includes('non')?'var(--navy-10)':'var(--green-bg)'};color:${(row.costType||'').includes('non')?'var(--navy-60)':'#00843D'}">${row.costType}</span></td>
+            <td colspan="${ACT}" style="font:600 12px/1 var(--font-ui)">${(amt/1e6).toFixed(1)} M đ</td>
+            <td style="font-weight:700">${(amt/1e6).toFixed(1)} M đ</td>
+          </tr>`;
+        });
+      });
+      const vc={PTY:'var(--pty)',JOB:'var(--job)',VEH:'var(--veh)',GDS:'var(--gds)'}[vert]||'var(--text)';
+      return `<div class="card" style="margin-bottom:0">
+        <div style="font:700 12px/1 var(--font-ui);color:${vc};margin-bottom:10px">${vert}</div>
+        <div style="overflow-x:auto"><table class="itable" style="min-width:520px">
+          <thead><tr><th style="text-align:left">Activity</th><th style="text-align:left">Contract</th><th style="text-align:left">Cost Type</th>${months5.map(m=>`<th>${m}</th>`).join('')}<th>Total</th></tr></thead>
+          <tbody>${tbody}</tbody>
+        </table></div>
+      </div>`;
+    };
+    const cards = VERT_ORDER.filter(v=>vertRows[v].length>0).map(v=>makeHCTable(v,vertRows[v]));
+    if (!cards.length){el.innerHTML='';return;}
+    el.innerHTML=`<div style="margin-bottom:8px"><div class="chart-title">Cost Detail by Vertical — from FC &amp; Actual</div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">${cards.join('')}</div>`;
+  }
+}
 
 function renderBudgetPacing() {
   const d = S.data; if (!d) return;
@@ -1441,13 +1566,13 @@ function renderBudgetPacing() {
   if (barsEl) barsEl.innerHTML = TRACKS.map((t,i)=>{
     const pct = totalAmt>0 ? trackAmts[i]/totalAmt*100 : 0;
     const clr = TRACK_CLR[t];
-    return `<div style="margin-bottom:12px">
-      <div style="display:flex;justify-content:space-between;font:400 12px/1 var(--font-ui);margin-bottom:5px">
+    return `<div style="margin-bottom:20px">
+      <div style="display:flex;justify-content:space-between;font:400 12px/1 var(--font-ui);margin-bottom:7px">
         <span style="color:${clr};font-weight:700">${t}</span>
         <span style="font:600 11px/1 var(--font-ui);color:var(--navy-60)">${trackAmts[i].toFixed(1)} M đ &nbsp;·&nbsp; ${pct.toFixed(0)}%</span>
       </div>
-      <div style="background:var(--navy-10);border-radius:4px;height:7px">
-        <div style="background:${clr};height:7px;border-radius:4px;width:${pct}%;transition:width .4s"></div>
+      <div style="background:var(--navy-10);border-radius:5px;height:13px">
+        <div style="background:${clr};height:13px;border-radius:5px;width:${pct}%;transition:width .4s"></div>
       </div>
     </div>`;
   }).join('');
@@ -1535,8 +1660,9 @@ function renderBudgetPacing() {
 
   // Cost table
   renderCostTable();
-  // Cost detail table
+  // Cost detail tables
   renderCostDetail();
+  renderCostDetailByVert();
 }
 
 // ── Unit Economics (Tab 2) ─────────────────────────────────────────────
@@ -2126,7 +2252,7 @@ function setOAMonth(el, mi) {
   document.querySelectorAll('[data-oam]').forEach(c=>{c.className='chip';if(+c.dataset.oam===mi)c.classList.add('active');});
   renderOAFunnel();
 }
-function renderMktSection(k) { renderMktBars(k,'input'); renderMktBars(k,'output'); renderMktDetail(k); renderMktPivot(k); }
+function renderMktSection(k) { renderMktBars(k,'input'); renderMktBars(k,'output'); renderMktDetail(k); }
 
 function fmtNum(v) {
   if (v==null) return '—'; const n=Number(v); if(isNaN(n)) return String(v);
@@ -2155,25 +2281,51 @@ function renderMktBars(key, type) {
   const idxs = sec.labels.map((_,i)=>i).filter(i=>sec.isOutput[i]===isOutType && !hidden.has(i));
   if(!idxs.length){
     if(S.charts.has(chartId)){S.charts.get(chartId).destroy();S.charts.delete(chartId);}
-    el.parentElement.style.height='40px';
-    el.parentElement.innerHTML='<div style="padding:12px;font:400 11px/1 var(--font-ui);color:var(--text-faint);text-align:center">Tất cả metrics đã bị ẩn</div>';
+    const wrap=el.closest('[style*="position:relative"]')||el.parentElement;
+    wrap.style.height='40px';
+    wrap.innerHTML='<div style="padding:12px;font:400 11px/1 var(--font-ui);color:var(--text-faint);text-align:center">Tất cả metrics đã bị ẩn</div>';
     return;
   }
   const labels=idxs.map(i=>(isOutType?'▸ ':'')+sec.labels[i]);
   const datasets=VERTS.map((v,vi)=>({
-    label:v, backgroundColor:VCOLS[vi]+'CC', borderColor:VCOLS[vi], borderWidth:1, borderRadius:3,
+    label:v, backgroundColor:VCOLS[vi]+'BB', borderColor:VCOLS[vi], borderWidth:1, borderRadius:4,
+    barThickness:13,
     data:idxs.map(i=>{
       const vd=sec.data[v],hb=(sec.higherBetter||[])[i]!==false;
       return _pa(_mktGetV(vd,i,mo),_mktGetT(vd,i,mo),hb);
     }),
+    actualData:idxs.map(i=>{
+      const vd=sec.data[v]; return _mktGetV(vd,i,mo);
+    }),
   }));
-  const h=Math.max(160, idxs.length*36+80);
-  el.parentElement.style.height=h+'px';
+  // Data label plugin: draw "value (pct%)" to right of each bar
+  const dlPlugin={id:'mktDL',afterDatasetsDraw(chart){
+    const {ctx}=chart;
+    chart.data.datasets.forEach((ds,di)=>{
+      const meta=chart.getDatasetMeta(di);
+      meta.data.forEach((bar,xi)=>{
+        const pct=ds.data[xi]; if(pct==null) return;
+        const act=ds.actualData?.[xi];
+        const txt=act!=null?`${fmtNum(act)} (${Math.round(pct)}%)`:`${Math.round(pct)}%`;
+        ctx.save();
+        ctx.font='500 9px Inter,sans-serif';
+        ctx.fillStyle='#4b5563';
+        ctx.textAlign='left';
+        ctx.textBaseline='middle';
+        ctx.fillText(txt, bar.x+5, bar.y);
+        ctx.restore();
+      });
+    });
+  }};
+  const h=Math.max(180, idxs.length*(13*VERTS.length+28)+70);
+  const wrap=el.closest('[style*="position:relative"]')||el.parentElement;
+  wrap.style.height=h+'px';
   if(S.charts.has(chartId)){S.charts.get(chartId).destroy();S.charts.delete(chartId);}
-  S.charts.set(chartId,new Chart(el.getContext('2d'),{type:'bar',data:{labels,datasets},
+  S.charts.set(chartId,new Chart(el.getContext('2d'),{type:'bar',data:{labels,datasets},plugins:[dlPlugin],
     options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
+      layout:{padding:{right:110}},
       plugins:{legend:{position:'bottom',labels:{font:{size:9},padding:8}},
-        tooltip:{callbacks:{label:ctx=>ctx.raw!=null?` ${ctx.dataset.label}: ${Math.round(ctx.raw)}%`:' —'}}},
+        tooltip:{callbacks:{label:ctx=>{const act=ctx.dataset.actualData?.[ctx.dataIndex];return act!=null?` ${ctx.dataset.label}: ${fmtNum(act)} (${Math.round(ctx.raw)}%)`:` ${ctx.dataset.label}: ${Math.round(ctx.raw)}%`;}}}},
       scales:{
         x:{beginAtZero:true,max:140,grid:{color:'#E8EDEF'},ticks:{callback:v=>v+'%',font:{size:10}}},
         y:{grid:{display:false},ticks:{font:{size:10},maxRotation:0}},
@@ -2294,10 +2446,6 @@ function renderMKTPerf() {
         <div class="chip-group" id="monthChip_${sm.key}">
           ${MONTHS.slice(0,ACT).map((m,i)=>`<div class="chip${i===ACT-1?' active':''}" data-mk="${sm.key}" data-mi="${i}" onclick="setMktMonth(this,'${sm.key}')">${m}</div>`).join('')}
         </div>
-        <span style="font:600 11px/1 var(--font-ui);color:var(--navy-60);margin-left:8px">Vertical:</span>
-        <div class="chip-group" id="vertChip_${sm.key}">
-          ${VERTS.map((v,vi)=>`<div class="chip${vi===0?' a-'+v.toLowerCase():''}" data-vk="${sm.key}" data-v="${v}" onclick="setMktVert(this,'${sm.key}')" style="color:${VC[v]}">${v}</div>`).join('')}
-        </div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
         <div>
@@ -2312,7 +2460,6 @@ function renderMKTPerf() {
         </div>
       </div>
       <div id="detailMKT_${sm.key}"></div>
-      <div style="margin-top:16px"><div class="chart-title mb-4">Monthly Data — All Metrics × Months</div><div id="pivotMKT_${sm.key}"></div></div>
     </div>`;
   });
 
@@ -2546,6 +2693,7 @@ function saveActData() {
   ['chartContractType','chartCostType','chartMonthlySpend'].forEach(k=>{if(S.charts.has(k)){S.charts.get(k).destroy();S.charts.delete(k);}});
   renderPL(); renderUE2();
   renderCostDetail();
+  renderCostDetailByVert();
   const msg=document.getElementById('act-save-msg');
   if(msg){
     msg.textContent='✓ Đã lưu';
