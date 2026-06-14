@@ -105,8 +105,8 @@ body{font-family:var(--font-ui);background:var(--bg);color:var(--text);font-size
 .sub-panel{display:none}.sub-panel.active{display:block}
 
 /* ── Section title (matches marketplace .section-title) */
-.section-label{font:700 14px/1.3 var(--font-ui);color:var(--text);display:flex;align-items:center;gap:8px;margin-bottom:14px}
-.section-label::before{content:'';display:block;width:3px;height:16px;background:var(--accent);border-radius:2px;flex-shrink:0}
+.section-label{font:700 17px/1.3 var(--font-ui);color:var(--text);display:flex;align-items:center;gap:8px;margin-bottom:14px;margin-top:4px}
+.section-label::before{content:'';display:block;width:4px;height:20px;background:var(--accent);border-radius:2px;flex-shrink:0}
 
 /* ── Tables ─────────────────────────────────────── */
 .dt{width:100%;border-collapse:collapse;font:400 12.5px/1.4 var(--font-ui)}
@@ -807,42 +807,35 @@ body{font-family:var(--font-ui);background:var(--bg);color:var(--text);font-size
     </div>
   </div>
 
-  <!-- PART 2: MKT Performance -->
+  <!-- PART 2: Activity Cost Detail -->
   <div style="margin:32px 0 0">
-    <div class="section-label">📊 MKT Performance — Nhập data theo tháng</div>
-    <div class="paste-tip">💡 Mỗi tháng chọn chip tháng → copy range từ sheet (từ dòng đầu tiên của section, ko gồm header, đúng thứ tự: PTY Target/Actual, JOB T/A, VEH T/A, GDS T/A) → click ô đầu tiên của section → <kbd>⌘V</kbd>.</div>
-    <div class="chip-group" id="perf-month-chips" style="margin-bottom:14px">
-      <button class="chip" data-mi="0" onclick="setPerfMonth(0,this)">Jan</button>
-      <button class="chip" data-mi="1" onclick="setPerfMonth(1,this)">Feb</button>
-      <button class="chip" data-mi="2" onclick="setPerfMonth(2,this)">Mar</button>
-      <button class="chip" data-mi="3" onclick="setPerfMonth(3,this)">Apr</button>
-      <button class="chip a-all" data-mi="4" onclick="setPerfMonth(4,this)">May</button>
-      <button class="chip" data-mi="5" onclick="setPerfMonth(5,this)">Jun</button>
-      <button class="chip" data-mi="6" onclick="setPerfMonth(6,this)">Jul</button>
-      <button class="chip" data-mi="7" onclick="setPerfMonth(7,this)">Aug</button>
-      <button class="chip" data-mi="8" onclick="setPerfMonth(8,this)">Sep</button>
-      <button class="chip" data-mi="9" onclick="setPerfMonth(9,this)">Oct</button>
-      <button class="chip" data-mi="10" onclick="setPerfMonth(10,this)">Nov</button>
-      <button class="chip" data-mi="11" onclick="setPerfMonth(11,this)">Dec</button>
-    </div>
+    <div class="section-label">📋 Cost Detail by Activity — FC &amp; Actual (VND)</div>
+    <div class="paste-tip">💡 Copy toàn bộ range từ Google Sheets (gồm các cột: Vertical, Objective, Activities, Team, Contract type, Cost type, Jan...Dec) → click ô đầu tiên của bảng → <kbd>⌘V</kbd>. Header row tự động được bỏ qua.</div>
     <div style="overflow-x:auto;border-radius:10px;border:1px solid var(--border);background:var(--surface)">
-      <table class="itable" id="perf-table" style="min-width:900px">
+      <table class="itable" id="act-table" style="min-width:1200px">
         <thead>
           <tr>
-            <th style="width:100px;text-align:left">Section</th>
-            <th style="width:160px;text-align:left">Metric</th>
-            <th style="width:68px;color:var(--pty)">PTY T</th><th style="width:68px;color:var(--pty)">PTY A</th>
-            <th style="width:68px;color:var(--job)">JOB T</th><th style="width:68px;color:var(--job)">JOB A</th>
-            <th style="width:68px;color:var(--veh)">VEH T</th><th style="width:68px;color:var(--veh)">VEH A</th>
-            <th style="width:68px;color:var(--gds)">GDS T</th><th style="width:68px;color:var(--gds)">GDS A</th>
+            <th style="width:70px;text-align:left">Vertical</th>
+            <th style="width:70px;text-align:left">Objective</th>
+            <th style="width:200px;text-align:left">Activities</th>
+            <th style="width:60px;text-align:left">Team</th>
+            <th style="width:90px;text-align:left">Contract</th>
+            <th style="width:70px;text-align:left">Cost type</th>
+            <th style="width:80px">Jan</th><th style="width:80px">Feb</th><th style="width:80px">Mar</th>
+            <th style="width:80px">Apr</th><th style="width:80px">May</th><th style="width:80px">Jun</th>
+            <th style="width:80px">Jul</th><th style="width:80px">Aug</th><th style="width:80px">Sep</th>
+            <th style="width:80px">Oct</th><th style="width:80px">Nov</th><th style="width:80px">Dec</th>
+            <th style="width:90px;font-weight:700">TOTAL</th>
           </tr>
         </thead>
-        <tbody id="perf-tbody"></tbody>
+        <tbody id="act-tbody"></tbody>
       </table>
     </div>
-    <div style="display:flex;gap:10px;margin-top:10px;align-items:center">
-      <button onclick="savePerfData()" style="background:var(--accent);color:#fff;border:none;border-radius:7px;padding:7px 18px;font:600 12px/1 var(--font-ui);cursor:pointer">💾 Lưu → cập nhật MKT Performance</button>
-      <span id="perf-save-msg" style="font:400 11.5px/1 var(--font-ui);color:var(--green)"></span>
+    <div style="display:flex;gap:10px;margin-top:10px;align-items:center;flex-wrap:wrap">
+      <button onclick="addActRow()" style="background:var(--surface);color:var(--accent);border:1px dashed var(--accent);border-radius:7px;padding:7px 14px;font:500 12px/1 var(--font-ui);cursor:pointer">+ Thêm dòng</button>
+      <button onclick="saveActData()" style="background:var(--accent);color:#fff;border:none;border-radius:7px;padding:7px 18px;font:600 12px/1 var(--font-ui);cursor:pointer">💾 Lưu → cập nhật Budget Pacing</button>
+      <button onclick="resetActData()" style="background:var(--surface);color:var(--text-light);border:1px solid var(--border);border-radius:7px;padding:7px 14px;font:500 12px/1 var(--font-ui);cursor:pointer">↺ Reset</button>
+      <span id="act-save-msg" style="font:400 11.5px/1 var(--font-ui);color:var(--green)"></span>
     </div>
   </div>
 </div>
@@ -868,6 +861,7 @@ Chart.defaults.borderColor = '#f3f4f6';
 Chart.defaults.plugins.legend.labels.usePointStyle = true;
 Chart.defaults.plugins.legend.labels.pointStyle = 'circle';
 Chart.defaults.plugins.legend.labels.padding = 14;
+Chart.defaults.plugins.legend.labels.font = {size:11,family:"'Inter',-apple-system,sans-serif"};
 Chart.defaults.plugins.tooltip.backgroundColor = '#1e293b';
 Chart.defaults.plugins.tooltip.titleColor = '#fff';
 Chart.defaults.plugins.tooltip.bodyColor = 'rgba(255,255,255,.8)';
@@ -922,7 +916,7 @@ const lineOpts = (y0=false) => ({
   plugins:{legend:{position:'bottom'}},
   scales:{
     x:{grid:{display:false}},
-    y:{grid:{color:'#E8EDEF'},beginAtZero:y0,ticks:{font:{size:11,family:"'JetBrains Mono'"}}}
+    y:{grid:{color:'#E8EDEF'},beginAtZero:y0,ticks:{font:{size:11,family:"'Geist Mono'"}}}
   },
   elements:{line:{tension:.3,borderWidth:2},point:{radius:3,hoverRadius:5}}
 });
@@ -1080,6 +1074,11 @@ function setPLVert(v, el) {
   });
   if (!S.data) return;
   renderPL(); renderUE2();
+  cohortVert = v==='ALL' ? 'ALL' : v;
+  document.querySelectorAll('#cohort-vert-filter .chip').forEach(c=>{c.className='chip';if(c.dataset.v===cohortVert)c.classList.add('a-'+cohortVert.toLowerCase());});
+  renderCohort();
+  ['chartContractType','chartCostType','chartMonthlySpend'].forEach(k=>{if(S.charts.has(k)){S.charts.get(k).destroy();S.charts.delete(k);}});
+  renderBudgetPacing();
 }
 
 function getRevArr() {
@@ -1196,7 +1195,7 @@ function renderPL() {
     plugins:{legend:{position:'bottom'}},
     scales:{
       x:{grid:{display:false}},
-      y:{beginAtZero:true,grid:{color:'#E8EDEF'},ticks:{callback:v=>v+'B',font:{size:11,family:"'JetBrains Mono'"}}},
+      y:{beginAtZero:true,grid:{color:'#E8EDEF'},ticks:{callback:v=>v+'B',font:{size:11,family:"'Geist Mono'"}}},
       y1:{position:'right',beginAtZero:true,grid:{drawOnChartArea:false},ticks:{callback:v=>v+'%',font:{size:11}}},
     },elements:{line:{tension:.3},point:{radius:3}}
   }});
@@ -1217,7 +1216,7 @@ function renderPL() {
   // MER + ROMI trends by vertical
   const trendsOpts = {responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
     plugins:{legend:{position:'bottom',labels:{pointStyleWidth:8,usePointStyle:true,padding:10}}},
-    scales:{x:{grid:{display:false}},y:{beginAtZero:true,grid:{color:'#E8EDEF'},ticks:{font:{size:11,family:"'JetBrains Mono'"}}}}};
+    scales:{x:{grid:{display:false}},y:{beginAtZero:true,grid:{color:'#E8EDEF'},ticks:{font:{size:11,family:"'Geist Mono'"}}}}};
   const merDatasets = [
     {label:'All',data:months.map((_,i)=>totalSpendM(i)>0?totalRevM(i)/totalSpendM(i):null),borderColor:C.all,pointRadius:3,borderWidth:2,tension:.3},
     ...VERTS4.map((v,vi)=>({label:v,data:months.map((_,i)=>{const s=d.spend[v]?.[i]||0;return s>0?(d.revenue[v]?.[i]||0)/s:null;}),
@@ -1278,7 +1277,6 @@ function renderPL() {
 
 // ── Budget Pacing rendering ───────────────────────────────────────────
 function renderBudgetPacing() {
-  if (S.charts.has('chartContractType')) return;
   const d = S.data; if (!d) return;
   const months = MONTHS.slice(0,ACT);
 
@@ -1319,7 +1317,8 @@ function renderBudgetPacing() {
   },options:{responsive:true,maintainAspectRatio:false,cutout:'68%',plugins:{legend:{position:'bottom',labels:{font:{size:10}}}}}});
 
   // Monthly spend chart — actual (Jan-May) + forecast (Jun-Dec)
-  const totalSpendFull = MONTHS.map((_,i)=>['PTY','JOB','VEH','GDS','PARENT'].reduce((s,v)=>(d.spend[v]?.[i]||0)+s,0));
+  const spendVerts = plVert==='ALL' ? ['PTY','JOB','VEH','GDS','PARENT'] : [plVert];
+  const totalSpendFull = MONTHS.map((_,i)=>spendVerts.reduce((s,v)=>(d.spend[v]?.[i]||0)+s,0));
   makeChart('chartMonthlySpend',{type:'bar',data:{
     labels:MONTHS,
     datasets:[
@@ -1404,7 +1403,7 @@ function renderUE2() {
     responsive:true,maintainAspectRatio:false,
     interaction:{mode:'index',intersect:false},
     plugins:{legend:{position:'bottom',labels:{usePointStyle:true,pointStyleWidth:8,padding:10}}},
-    scales:{x:{grid:{display:false}},y:{beginAtZero:true,grid:{color:'#E8EDEF'},ticks:{font:{size:11,family:"'JetBrains Mono'"}}}}
+    scales:{x:{grid:{display:false}},y:{beginAtZero:true,grid:{color:'#E8EDEF'},ticks:{font:{size:11,family:"'Geist Mono'"}}}}
   });
 
   // Per-vertical calculations
@@ -1739,7 +1738,7 @@ function renderHC() {
     plugins:{legend:{position:'bottom',labels:{usePointStyle:true,pointStyleWidth:8,padding:12,font:{size:11}}}},
     scales:{
       x:{grid:{display:false}},
-      y:{min:6,max:10,grid:{color:'#E8EDEF'},ticks:{font:{size:11,family:"'JetBrains Mono'"},stepSize:.5}}
+      y:{min:6,max:10,grid:{color:'#E8EDEF'},ticks:{font:{size:11,family:"'Geist Mono'"},stepSize:.5}}
     },
     elements:{line:{tension:.35},point:{radius:4,hoverRadius:6}}
   }});
@@ -1884,6 +1883,13 @@ function renderMKTPerf() {
     </table>
   </div>`;
 
+  const fmtActual = v => {
+    if (v==null) return '—';
+    if (v>=1e6) return (v/1e6).toFixed(1)+'M';
+    if (v>=1e3) return (v/1e3).toFixed(1)+'k';
+    return String(v);
+  };
+
   // Per-section detail
   sects.forEach(sm => {
     const sec = MKT_PERF[sm.key];
@@ -1891,10 +1897,10 @@ function renderMKTPerf() {
       const isOut=sec.isOutput[mi], hb=sec.higherBetter[mi];
       const cells=VERTS.map(v=>{
         const vd=sec.data[v],a=vd.actual[mi],t=vd.target[mi],p=pctAchieve(a,t,hb);
-        return `<td>
-          <div style="font:600 11px/1.2 var(--font-mono)">${fBig(a)}</div>
-          <div style="font:400 10px/1.3 var(--font-ui);color:var(--text-faint)">/${fBig(t)}</div>
-          <div>${pctBadge(p)}</div>
+        return `<td style="text-align:center">
+          <div style="font:600 11px/1.2 var(--font-mono);color:var(--text)">${fmtActual(a)}</div>
+          <div style="font:400 10px/1.3 var(--font-ui);color:var(--text-faint)">${t!=null?'/'+fmtActual(t):''}</div>
+          <div style="margin-top:2px">${pctBadge(p)}</div>
         </td>`;
       }).join('');
       return `<tr style="${isOut?'background:var(--accent-light)':''}">
@@ -1908,13 +1914,13 @@ function renderMKTPerf() {
     <div style="margin:28px 0 14px"><div class="section-label">${sm.label}</div></div>
     <div class="card mb-4" style="overflow-x:auto">
       <div style="font:400 11px/1.4 var(--font-ui);color:var(--navy-60);margin-bottom:12px">May 2026 · Actual / Target / % · Output rows highlighted</div>
-      <table class="dt" style="min-width:600px">
+      <table class="dt" style="min-width:700px">
         <thead><tr>
           <th>Metric</th><th>Type</th>
-          <th style="color:var(--pty)">PTY</th>
-          <th style="color:var(--job)">JOB</th>
-          <th style="color:var(--veh)">VEH</th>
-          <th style="color:var(--gds)">GDS/ALL</th>
+          <th style="color:var(--pty);text-align:center">PTY</th>
+          <th style="color:var(--job);text-align:center">JOB</th>
+          <th style="color:var(--veh);text-align:center">VEH</th>
+          <th style="color:var(--gds);text-align:center">GDS/ALL</th>
         </tr></thead>
         <tbody>${rows}</tbody>
       </table>
@@ -1931,7 +1937,7 @@ function renderMKTPerf() {
 // ── Data Input Tab (Tab 5) ────────────────────────────────────────────
 
 // Cost table config
-const COST_VERTS = ['PTY','JOB','VEH','GDS','PARENT'];
+const COST_VERTS = ['GDS','JOB','PARENT','PTY','VEH'];
 const COST_VERT_COLORS = {PTY:'var(--pty)',JOB:'var(--job)',VEH:'var(--veh)',GDS:'var(--gds)',PARENT:'var(--purple)'};
 
 // In-memory editable cost store (B VND, 12 months each vert)
@@ -1941,10 +1947,11 @@ function initEditCost() {
   const d = S.data || {};
   editCost = {};
   COST_VERTS.forEach(v => {
-    editCost[v] = [...((d.spend && d.spend[v]) || Array(12).fill(0))];
+    editCost[v] = ((d.spend && d.spend[v]) || Array(12).fill(0)).map(b => Math.round(b * 1e9));
   });
 }
 
+function fmtVND(n){if(!n||n===0)return '';return Math.round(n).toLocaleString('en-US');}
 function renderCostTable() {
   if (!editCost) initEditCost();
   const tbody = document.getElementById('cost-tbody');
@@ -1954,14 +1961,13 @@ function renderCostTable() {
     const clr = COST_VERT_COLORS[v];
     html += `<tr>
       <td class="row-label" style="color:${clr}">${v}</td>
-      ${editCost[v].map((val,mi)=>`<td contenteditable="true" data-v="${v}" data-mi="${mi}" style="color:var(--text)">${val||''}</td>`).join('')}
+      ${editCost[v].map((val,mi)=>`<td contenteditable="true" data-v="${v}" data-mi="${mi}" style="color:var(--text)">${fmtVND(val)}</td>`).join('')}
     </tr>`;
   });
-  // Total row (computed, read-only)
   const totals = Array(12).fill(0).map((_,mi)=>COST_VERTS.reduce((s,v)=>(editCost[v][mi]||0)+s,0));
   html += `<tr>
     <td class="row-label total-row">TOTAL</td>
-    ${totals.map(t=>`<td class="total-row">${t>0?t.toFixed(3):''}</td>`).join('')}
+    ${totals.map(t=>`<td class="total-row">${fmtVND(t)}</td>`).join('')}
   </tr>`;
   tbody.innerHTML = html;
 
@@ -1985,7 +1991,7 @@ function handleCostPaste(e) {
     cols.forEach((val, ci) => {
       const mi = startMi + ci;
       if (mi >= 12) return;
-      const num = parseFloat(val.replace(/,/g,'').replace(/[^\d.]/g,'')) || 0;
+      const num = parseFloat(val.replace(/,/g,'').replace(/[^\d.]/g,'').trim()) || 0;
       editCost[v][mi] = num;
       const cell = document.querySelector(`#cost-tbody td[data-v="${v}"][data-mi="${mi}"]`);
       if (cell) { cell.textContent = num || ''; cell.classList.add('paste-highlight'); }
@@ -1998,13 +2004,13 @@ function updateCostTotals() {
   // sync editCost from DOM (handles manual typing)
   document.querySelectorAll('#cost-tbody td[contenteditable]').forEach(td => {
     const v = td.dataset.v, mi = parseInt(td.dataset.mi);
-    editCost[v][mi] = parseFloat(td.textContent.replace(/,/g,'')) || 0;
+    editCost[v][mi] = parseFloat(td.textContent.replace(/,/g,'').replace(/[^\d.]/g,'')) || 0;
   });
   // update total row
   const totalCells = document.querySelectorAll('#cost-tbody tr:last-child td:not(.row-label)');
   totalCells.forEach((cell, mi) => {
     const t = COST_VERTS.reduce((s,v)=>(editCost[v][mi]||0)+s,0);
-    cell.textContent = t > 0 ? t.toFixed(3) : '';
+    cell.textContent = fmtVND(t);
   });
 }
 
@@ -2015,7 +2021,7 @@ document.addEventListener('input', e => {
 function saveCostData() {
   updateCostTotals();
   if (!S.data) return;
-  COST_VERTS.forEach(v => { S.data.spend[v] = [...editCost[v]]; });
+  COST_VERTS.forEach(v => { S.data.spend[v] = editCost[v].map(n => n/1e9); });
   // re-render P&L if it's the active tab
   if (document.getElementById('tab-2').classList.contains('active')) {
     renderPL(); renderBudgetPacing(); renderUE2();
@@ -2035,204 +2041,134 @@ function resetCostData() {
   renderCostTable();
 }
 
-// ── MKT Performance input ─────────────────────────────────────────────
+// ── Activity cost table (Tab 5 Part 2) ───────────────────────────────
+const ACT_META_COLS = 6;
+const ACT_META_KEYS = ['vert','objective','activities','team','contract','costType'];
 
-const PERF_ROWS = [
-  {sect:'Branding',    type:'input',  key:'content_creative',   label:'# Content & creative'},
-  {sect:'Branding',    type:'input',  key:'content_viewer',     label:'# Content viewer'},
-  {sect:'Branding',    type:'input',  key:'brand_kw_impr',      label:'# Brand kw impr.'},
-  {sect:'Branding',    type:'output', key:'content_interaction', label:'# Content interaction'},
-  {sect:'Branding',    type:'output', key:'social_follower',    label:'# Social follower uplift'},
-  {sect:'Branding',    type:'output', key:'brand_kw_click',     label:'# Brand kw click'},
-  {sect:'Digital',     type:'input',  key:'cp_dau',             label:'cp DAU'},
-  {sect:'Digital',     type:'input',  key:'cp_dwl',             label:'cp DwL'},
-  {sect:'Digital',     type:'input',  key:'cp_lead',            label:'cp Lead'},
-  {sect:'Digital',     type:'input',  key:'cr_to_lead',         label:'CR to lead'},
-  {sect:'Digital',     type:'output', key:'dau',                label:'DAU'},
-  {sect:'Digital',     type:'output', key:'dwl',                label:'DwL'},
-  {sect:'Digital',     type:'output', key:'lead',               label:'Lead'},
-  {sect:'App Growth',  type:'input',  key:'cpi',                label:'CPI'},
-  {sect:'App Growth',  type:'input',  key:'ctr',                label:'CTR'},
-  {sect:'App Growth',  type:'output', key:'app_install',        label:'# App install'},
-  {sect:'App Growth',  type:'output', key:'activated_user',     label:'# Activated user'},
-  {sect:'App Growth',  type:'output', key:'d1_rr',              label:'D1 RR'},
+let activityRows = [
+  {vert:'GDS',objective:'Demand',activities:'Always-on Digital app growth',team:'Growth',contract:'Operation',costType:'Working',months:Array(12).fill(0)},
+  {vert:'GDS',objective:'Demand',activities:'Always-on Digital to drive DwL',team:'Growth',contract:'Operation',costType:'Working',months:Array(12).fill(0)},
+  {vert:'GDS',objective:'Supply',activities:'Vouchers, incentives, rewards, ZNS/SMS',team:'Vertical',contract:'Operation',costType:'Working',months:Array(12).fill(0)},
+  {vert:'JOB',objective:'Demand',activities:'Always-on digital & social media (Google, Facebook, ...)',team:'Brand',contract:'Operation',costType:'Working',months:Array(12).fill(0)},
+  {vert:'JOB',objective:'Demand',activities:'Always-on Digital app growth',team:'Growth',contract:'Operation',costType:'Working',months:Array(12).fill(0)},
+  {vert:'JOB',objective:'Demand',activities:'Always-on Digital to drive DwL',team:'Growth',contract:'Operation',costType:'Working',months:Array(12).fill(0)},
+  {vert:'JOB',objective:'Demand',activities:'Content (blog, content hub, outsource freelancers)',team:'SEO',contract:'Consultancy',costType:'Working',months:Array(12).fill(0)},
+  {vert:'JOB',objective:'Supply',activities:'Seminar/ Talkshow/ B2B events/ awards',team:'Vertical',contract:'Operation',costType:'Working',months:Array(12).fill(0)},
+  {vert:'JOB',objective:'Supply',activities:'Vouchers, incentives, rewards, ZNS/SMS',team:'Vertical',contract:'Operation',costType:'Working',months:Array(12).fill(0)},
+  {vert:'PARENT',objective:'Demand',activities:'Always-on Digital app growth',team:'Growth',contract:'Operation',costType:'Working',months:Array(12).fill(0)},
+  {vert:'PARENT',objective:'Demand',activities:'Always-on Digital to drive DwL',team:'Growth',contract:'Operation',costType:'Working',months:Array(12).fill(0)},
+  {vert:'PARENT',objective:'Demand',activities:'Brand gifts, mascot, merchandise, video production',team:'Brand',contract:'Operation',costType:'Working',months:Array(12).fill(0)},
+  {vert:'PARENT',objective:'Demand',activities:'Brand Health Tracker for 4 verticals',team:'Brand',contract:'Operation',costType:'Non-working',months:Array(12).fill(0)},
+  {vert:'PARENT',objective:'Demand',activities:'GTM key features, parent campaigns',team:'Brand',contract:'Operation',costType:'Working',months:Array(12).fill(0)},
+  {vert:'PARENT',objective:'Demand',activities:'Media relations, journalist gifts, awards',team:'Brand',contract:'Operation',costType:'Non-working',months:Array(12).fill(0)},
+  {vert:'PARENT',objective:'Demand',activities:'Partnership - Tracy Nguyễn',team:'Brand',contract:'Consultancy',costType:'Working',months:Array(12).fill(0)},
+  {vert:'PARENT',objective:'Demand',activities:'SEMRush, Keyword tool, Video tools',team:'SEO',contract:'Operation',costType:'Non-working',months:Array(12).fill(0)},
+  {vert:'PARENT',objective:'Demand',activities:'Social content - Trương Nguyễn Tường Vy',team:'Brand',contract:'Consultancy',costType:'Working',months:Array(12).fill(0)},
+  {vert:'PARENT',objective:'Demand',activities:'Tools MMP (Branch/AirBridge)',team:'Growth',contract:'Operation',costType:'Non-working',months:Array(12).fill(0)},
+  {vert:'PARENT',objective:'Demand',activities:'ZNS, Chợ Tốt OA, Adtima',team:'Brand',contract:'Operation',costType:'Working',months:Array(12).fill(0)},
+  {vert:'PTY',objective:'Demand',activities:'Always-on Digital app growth',team:'Growth',contract:'Operation',costType:'Working',months:Array(12).fill(0)},
+  {vert:'PTY',objective:'Demand',activities:'Always-on Digital to drive DwL',team:'Growth',contract:'Operation',costType:'Working',months:Array(12).fill(0)},
+  {vert:'PTY',objective:'Demand',activities:'Content (blog, content hub, outsource freelancers)',team:'SEO',contract:'Consultancy',costType:'Working',months:Array(12).fill(0)},
+  {vert:'PTY',objective:'Supply',activities:'Always-on digital & social media (Google, Facebook, ...)',team:'Brand',contract:'Operation',costType:'Working',months:Array(12).fill(0)},
+  {vert:'PTY',objective:'Supply',activities:'Promotion (incentives, digital ads, vouchers, ...)',team:'Vertical',contract:'Operation',costType:'Working',months:Array(12).fill(0)},
+  {vert:'PTY',objective:'Supply',activities:'Vouchers, incentives, rewards, ZNS/SMS',team:'Vertical',contract:'Operation',costType:'Working',months:Array(12).fill(0)},
+  {vert:'VEH',objective:'Demand',activities:'Always-on Digital app growth',team:'Growth',contract:'Operation',costType:'Working',months:Array(12).fill(0)},
+  {vert:'VEH',objective:'Demand',activities:'Always-on Digital to drive DwL',team:'Growth',contract:'Operation',costType:'Working',months:Array(12).fill(0)},
+  {vert:'VEH',objective:'Supply',activities:'Seminar/ Talkshow/ B2B events/ awards',team:'Vertical',contract:'Operation',costType:'Working',months:Array(12).fill(0)},
+  {vert:'VEH',objective:'Supply',activities:'Vouchers, incentives, rewards, ZNS/SMS',team:'Vertical',contract:'Operation',costType:'Working',months:Array(12).fill(0)},
 ];
 
-const PERF_VERTS = ['PTY','JOB','VEH','GDS'];
+function parseActNum(v){const s=String(v).replace(/,/g,'').replace(/\s/g,'').replace(/[^\d-]/g,'');return parseInt(s)||0;}
 
-// Store: perfStore[mi][rowKey][vert] = {t: target, a: actual}
-let perfStore = {};
-let perfMonth = 4; // default May (index 4)
-
-function initPerfStore() {
-  // Pre-fill from existing MKT_PERF (May = index 4)
-  PERF_ROWS.forEach(row => {
-    for (let mi = 0; mi < 12; mi++) {
-      if (!perfStore[mi]) perfStore[mi] = {};
-      if (!perfStore[mi][row.key]) perfStore[mi][row.key] = {};
-      PERF_VERTS.forEach(v => {
-        if (!perfStore[mi][row.key][v]) {
-          // pull from MKT_PERF if it exists and this is May (mi=4)
-          if (mi === 4 && typeof MKT_PERF !== 'undefined') {
-            const sectKey = row.sect === 'Branding' ? 'branding' :
-                            row.sect === 'Digital'  ? 'digital_demand' : 'app_growth';
-            const sec = MKT_PERF[sectKey];
-            if (sec) {
-              const li = sec.labels.indexOf(row.label);
-              if (li >= 0) {
-                const vData = sec[v.toLowerCase()] || sec[v];
-                perfStore[mi][row.key][v] = {
-                  t: vData?.target?.[li] ?? '',
-                  a: vData?.actual?.[li] ?? ''
-                };
-                return;
-              }
-            }
-          }
-          perfStore[mi][row.key][v] = {t:'', a:''};
-        }
-      });
-    }
-  });
-}
-
-function setPerfMonth(mi, el) {
-  perfMonth = mi;
-  document.querySelectorAll('#perf-month-chips .chip').forEach(c => {
-    c.className = 'chip';
-    if (parseInt(c.dataset.mi) === mi) c.classList.add('a-all');
-  });
-  renderPerfTable();
-}
-
-function renderPerfTable() {
-  const tbody = document.getElementById('perf-tbody');
+function renderActTable() {
+  const tbody = document.getElementById('act-tbody');
   if (!tbody) return;
-  initPerfStore();
-  let html = '';
-  let lastSect = '';
-  PERF_ROWS.forEach((row, ri) => {
-    if (row.sect !== lastSect) {
-      const bg = row.sect==='Branding' ? 'var(--pty-bg)' : row.sect==='Digital' ? 'var(--veh-bg)' : 'var(--green-bg)';
-      const clr = row.sect==='Branding' ? 'var(--pty)' : row.sect==='Digital' ? 'var(--veh)' : 'var(--green)';
-      html += `<tr class="sect-row"><td colspan="10" style="color:${clr};background:${bg};font-weight:700">${row.sect} · <span style="font-weight:400;font-size:10px;opacity:.75">${row.type==='input'?'Input metric':'Output metric'}</span></td></tr>`;
-      lastSect = row.sect;
-    } else if (ri > 0 && PERF_ROWS[ri-1].type !== row.type && PERF_ROWS[ri-1].sect === row.sect) {
-      const bg = row.sect==='Branding' ? 'var(--pty-bg)' : row.sect==='Digital' ? 'var(--veh-bg)' : 'var(--green-bg)';
-      const clr = row.sect==='Branding' ? 'var(--pty)' : row.sect==='Digital' ? 'var(--veh)' : 'var(--green)';
-      html += `<tr class="sect-row"><td colspan="10" style="color:${clr};background:${bg};font-weight:400;font-size:10px;opacity:.8;padding:4px 7px">${row.sect} · Output metric</td></tr>`;
-    }
-    const store = perfStore[perfMonth]?.[row.key] || {};
-    html += `<tr>
-      <td class="row-label" style="font-size:11px;color:var(--text-light)">${row.sect}</td>
-      <td class="row-sublabel" style="position:sticky;left:0;background:var(--surface);font-size:11.5px;font-weight:500;color:var(--text)">${row.label}</td>
-      ${PERF_VERTS.map(v=>{
-        const s = store[v]||{t:'',a:''};
-        return `<td contenteditable="true" data-ri="${ri}" data-v="${v}" data-field="t" style="color:var(--text-light)">${s.t}</td>
-                <td contenteditable="true" data-ri="${ri}" data-v="${v}" data-field="a" style="font-weight:600;color:var(--text)">${s.a}</td>`;
-      }).join('')}
+  const VERT_CLR = {PTY:'var(--pty)',JOB:'var(--job)',VEH:'var(--veh)',GDS:'var(--gds)',PARENT:'var(--purple)'};
+  tbody.innerHTML = activityRows.map((row,ri) => {
+    const mCells = row.months.map((v,mi)=>`<td contenteditable="true" data-ri="${ri}" data-mi="${mi}" class="act-month">${v?fmtVND(v):''}</td>`).join('');
+    const total = row.months.reduce((s,v)=>s+v,0);
+    const clr = VERT_CLR[row.vert?.toUpperCase()]||'var(--text)';
+    return `<tr>
+      <td contenteditable="true" data-ri="${ri}" data-meta="vert" class="row-label" style="color:${clr}">${row.vert}</td>
+      <td contenteditable="true" data-ri="${ri}" data-meta="objective" style="text-align:left;font-size:11px;padding-left:6px">${row.objective}</td>
+      <td contenteditable="true" data-ri="${ri}" data-meta="activities" style="text-align:left;font-size:11px;padding-left:6px;white-space:normal;line-height:1.3">${row.activities}</td>
+      <td contenteditable="true" data-ri="${ri}" data-meta="team" style="text-align:left;font-size:11px;padding-left:6px">${row.team}</td>
+      <td contenteditable="true" data-ri="${ri}" data-meta="contract" style="text-align:left;font-size:11px;padding-left:6px">${row.contract}</td>
+      <td contenteditable="true" data-ri="${ri}" data-meta="costType" style="text-align:left;font-size:11px;padding-left:6px">${row.costType}</td>
+      ${mCells}
+      <td style="font-weight:700;color:var(--text);font-family:var(--font-mono)">${total?fmtVND(total):''}</td>
     </tr>`;
-  });
-  tbody.innerHTML = html;
-
-  // Paste handler
-  tbody.addEventListener('paste', handlePerfPaste, {once:false});
+  }).join('');
+  tbody.addEventListener('paste', handleActPaste, {once:false});
 }
 
-function handlePerfPaste(e) {
-  const focused = document.activeElement;
-  if (!focused || focused.dataset.ri === undefined) return;
+function handleActPaste(e) {
   e.preventDefault();
-  const tsv = (e.clipboardData || window.clipboardData).getData('text');
-  const rows = tsv.trim().split(/\r?\n/).map(r => r.split('\t'));
-  const startRi = parseInt(focused.dataset.ri);
-  const startV = focused.dataset.v;
-  const startField = focused.dataset.field;
-  const vIdx = PERF_VERTS.indexOf(startV);
-  const fieldIdx = startField === 't' ? 0 : 1;
-
-  rows.forEach((cols, ri) => {
-    const rowIdx = startRi + ri;
-    if (rowIdx >= PERF_ROWS.length) return;
-    const row = PERF_ROWS[rowIdx];
-    if (!perfStore[perfMonth]) perfStore[perfMonth] = {};
-    if (!perfStore[perfMonth][row.key]) perfStore[perfMonth][row.key] = {};
-    cols.forEach((val, ci) => {
-      const totalColIdx = vIdx * 2 + fieldIdx + ci;
-      const vi = Math.floor(totalColIdx / 2);
-      const fi = totalColIdx % 2 === 0 ? 't' : 'a';
-      if (vi >= PERF_VERTS.length) return;
-      const v = PERF_VERTS[vi];
-      if (!perfStore[perfMonth][row.key][v]) perfStore[perfMonth][row.key][v] = {t:'',a:''};
-      const cleaned = val.trim().replace(/,/g,'').replace(/%/,'');
-      perfStore[perfMonth][row.key][v][fi] = isNaN(cleaned)||cleaned==='' ? val.trim() : parseFloat(cleaned);
-      const cell = document.querySelector(`#perf-tbody td[data-ri="${rowIdx}"][data-v="${v}"][data-field="${fi}"]`);
-      if (cell) { cell.textContent = perfStore[perfMonth][row.key][v][fi]; cell.classList.add('paste-highlight'); }
-    });
-  });
-}
-
-function syncPerfFromDOM() {
-  document.querySelectorAll('#perf-tbody td[contenteditable]').forEach(td => {
-    const ri = parseInt(td.dataset.ri), v = td.dataset.v, fi = td.dataset.field;
-    if (isNaN(ri) || !v || !fi) return;
-    const row = PERF_ROWS[ri];
-    if (!row) return;
-    if (!perfStore[perfMonth]) perfStore[perfMonth] = {};
-    if (!perfStore[perfMonth][row.key]) perfStore[perfMonth][row.key] = {};
-    if (!perfStore[perfMonth][row.key][v]) perfStore[perfMonth][row.key][v] = {t:'',a:''};
-    const val = td.textContent.trim().replace(/,/g,'').replace(/%/,'');
-    perfStore[perfMonth][row.key][v][fi] = isNaN(val)||val==='' ? td.textContent.trim() : parseFloat(val);
-  });
-}
-
-function savePerfData() {
-  syncPerfFromDOM();
-  // Rebuild MKT_PERF from perfStore for the months that have data
-  const sectMap = {
-    branding: PERF_ROWS.filter(r=>r.sect==='Branding'),
-    digital_demand: PERF_ROWS.filter(r=>r.sect==='Digital'),
-    app_growth: PERF_ROWS.filter(r=>r.sect==='App Growth'),
-  };
-  const monthsWithData = Object.keys(perfStore).map(Number).filter(mi =>
-    PERF_ROWS.some(row => PERF_VERTS.some(v => perfStore[mi]?.[row.key]?.[v]?.a !== ''))
-  );
-  if (monthsWithData.length === 0) {
-    alert('Chưa có data nào để lưu'); return;
+  const tsv = (e.clipboardData||window.clipboardData).getData('text');
+  const rows = tsv.trim().split(/\r?\n/).map(r=>r.split('\t'));
+  if (!rows.length) return;
+  let startRow = 0;
+  if (rows[0].length >= ACT_META_COLS) {
+    const maybeHdr = ['vertical','vert','objective','activities','team','contract'].some(h=>rows[0][0]?.toLowerCase().includes(h));
+    if (maybeHdr) startRow = 1;
   }
-  // Rebuild MKT_PERF sections
-  ['branding','digital_demand','app_growth'].forEach(sectKey => {
-    const rows = sectMap[sectKey];
-    MKT_PERF[sectKey].labels = rows.map(r=>r.label);
-    PERF_VERTS.forEach(v => {
-      const vk = v.toLowerCase();
-      // find all months that have data for this section+vert
-      const miList = monthsWithData.sort((a,b)=>a-b);
-      MKT_PERF[sectKey][vk] = {
-        target: rows.map((_,ri)=>{
-          const last = miList[miList.length-1];
-          return perfStore[last]?.[rows[ri].key]?.[v]?.t ?? null;
-        }),
-        actual: rows.map((_,ri)=>{
-          const last = miList[miList.length-1];
-          return perfStore[last]?.[rows[ri].key]?.[v]?.a ?? null;
-        }),
-      };
+  const parsed = rows.slice(startRow).filter(r=>r.some(c=>c.trim()));
+  if (!parsed.length) return;
+  activityRows = parsed.map(cols => {
+    const meta = ACT_META_KEYS.reduce((o,k,i)=>({...o,[k]:(cols[i]||'').trim()}),{});
+    const months = Array(12).fill(0).map((_,mi)=>parseActNum(cols[ACT_META_COLS+mi]||0));
+    return {...meta, months};
+  });
+  renderActTable();
+}
+
+function addActRow() {
+  activityRows.push({vert:'',objective:'',activities:'',team:'',contract:'',costType:'',months:Array(12).fill(0)});
+  renderActTable();
+}
+
+function syncActFromDOM() {
+  document.querySelectorAll('#act-tbody tr').forEach((tr,ri) => {
+    if (!activityRows[ri]) return;
+    tr.querySelectorAll('td[data-meta]').forEach(td=>{
+      activityRows[ri][td.dataset.meta] = td.textContent.trim();
+    });
+    tr.querySelectorAll('td.act-month').forEach(td=>{
+      activityRows[ri].months[parseInt(td.dataset.mi)] = parseActNum(td.textContent);
     });
   });
-  // Re-render Tab 3 if active
-  S.charts.forEach((c,k)=>{ if(k.startsWith('chartMKT')){ c.destroy(); S.charts.delete(k); }});
-  if (document.getElementById('tab-3').classList.contains('active')) renderMKTPerf();
-  const msg = document.getElementById('perf-save-msg');
-  msg.textContent = '✓ Đã lưu & cập nhật MKT Performance';
-  setTimeout(()=>msg.textContent='', 3000);
+}
+
+function saveActData() {
+  syncActFromDOM();
+  if (S.data) {
+    const ns={PTY:Array(12).fill(0),JOB:Array(12).fill(0),VEH:Array(12).fill(0),GDS:Array(12).fill(0),PARENT:Array(12).fill(0)};
+    activityRows.forEach(row=>{
+      const v=(row.vert||'').toUpperCase();
+      if (!ns[v]) return;
+      row.months.forEach((amt,mi)=>{ ns[v][mi]+=amt/1e9; });
+    });
+    Object.assign(S.data.spend,ns);
+    editCost=null; initEditCost();
+    if (document.getElementById('cost-tbody')) renderCostTable();
+  }
+  ['chartContractType','chartCostType','chartMonthlySpend'].forEach(k=>{if(S.charts.has(k)){S.charts.get(k).destroy();S.charts.delete(k);}});
+  if (document.getElementById('tab-2').classList.contains('active')){renderPL();renderBudgetPacing();renderUE2();}
+  const msg=document.getElementById('act-save-msg');
+  msg.textContent='✓ Đã lưu & cập nhật Budget Pacing';
+  setTimeout(()=>msg.textContent='',3000);
+}
+
+function resetActData() {
+  if (!confirm('Reset về data gốc?')) return;
+  activityRows=activityRows.map(r=>({...r,months:Array(12).fill(0)}));
+  renderActTable();
 }
 
 function renderDataInput() {
   initEditCost();
   renderCostTable();
-  initPerfStore();
-  renderPerfTable();
+  renderActTable();
 }
 
 // ── Init ──────────────────────────────────────────────────────────────
