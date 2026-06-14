@@ -2323,7 +2323,7 @@ function renderMktBars(key, type) {
   const labels=idxs.map(i=>(isOutType?'▸ ':'')+sec.labels[i]);
   const datasets=VERTS.map((v,vi)=>({
     label:v, backgroundColor:VCOLS[vi]+'BB', borderColor:VCOLS[vi], borderWidth:1, borderRadius:4,
-    barThickness:13,
+    categoryPercentage:0.85, barPercentage:0.55,
     data:idxs.map(i=>{
       const vd=sec.data[v],hb=(sec.higherBetter||[])[i]!==false;
       return _pa(_mktGetV(vd,i,mo),_mktGetT(vd,i,mo),hb);
@@ -2351,7 +2351,7 @@ function renderMktBars(key, type) {
       });
     });
   }};
-  const h=Math.max(200, idxs.length*(13*VERTS.length+42)+80);
+  const h=Math.max(180, idxs.length*70+50);
   const wrap=el.closest('[style*="position:relative"]')||el.parentElement;
   wrap.style.height=h+'px';
   if(S.charts.has(chartId)){S.charts.get(chartId).destroy();S.charts.delete(chartId);}
