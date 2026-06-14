@@ -784,18 +784,19 @@ body{font-family:var(--font-ui);background:var(--bg);color:var(--text);font-size
 
   <!-- Feedforward 360° -->
   <div class="card mb-20">
-    <div class="chart-title mb-4">💬 Feedforward 360° — Quarterly Trend</div>
-    <div style="font:400 11px/1.4 var(--font-ui);color:var(--navy-60);margin-bottom:16px">Avg score theo quý (thang 0–10) · Q1'26 = ước tính · Q2'26 (May) = thực tế từ PDF</div>
+    <div class="chart-title mb-4">💬 Feedforward 360° — Q2'26 Summary</div>
+    <div style="font:400 11px/1.4 var(--font-ui);color:var(--navy-60);margin-bottom:16px">Điểm trung bình Q2'26 mỗi thành viên (thang 0–10 = 0–100%) · Dữ liệu thực tế từ PDF</div>
     <div class="chart-card mb-16">
-      <div class="chart-title">Quarterly Trend — All Members (from Q2'26)</div>
-      <div style="position:relative;height:280px"><canvas id="chartFFTrend"></canvas></div>
+      <div class="chart-title">Q2'26 — Avg Score by Member</div>
+      <div style="position:relative;height:240px"><canvas id="chartFFTrend"></canvas></div>
     </div>
     <div style="overflow-x:auto">
       <table class="dt">
         <thead><tr>
           <th>Member</th><th>Track</th>
-          <th class="r">Q1'26 (Jan–Mar)</th><th class="r">Q2'26 Apr</th><th class="r">Q2'26 May</th>
-          <th class="r">Q2 Avg (so far)</th>
+          <th class="r">🚀 Fast Growth</th><th class="r">🎯 Resp.</th><th class="r">💙 User-First</th>
+          <th class="r">🔒 Integrity</th><th class="r">🤝 Team</th><th class="r">⚡ Energy</th>
+          <th class="r">Avg Q2'26</th>
         </tr></thead>
         <tbody id="ff-tbody"></tbody>
       </table>
@@ -805,7 +806,13 @@ body{font-family:var(--font-ui);background:var(--bg);color:var(--text);font-size
   <!-- Spider charts grid -->
   <div class="card">
     <div class="chart-title mb-4">🕸️ Spider Chart — Feedforward 360° by Member</div>
-    <div style="font:400 11px/1.4 var(--font-ui);color:var(--navy-60);margin-bottom:14px">6 chiều đánh giá Q2'26 · Thang điểm 0–10 · Click vào card để xem chi tiết</div>
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px">
+      <span style="font:400 11px/1 var(--font-ui);color:var(--navy-60)">Quý:</span>
+      <div class="chip-group" id="ff-quarter-chips">
+        <button class="chip active" onclick="setFFQuarter(this,&quot;Q2'26&quot;)">Q2'26</button>
+      </div>
+      <span style="font:400 11px/1 var(--font-ui);color:var(--navy-60)">· Thang điểm 0–10 · Click card để xem chi tiết</span>
+    </div>
     <!-- Dimension legend -->
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:18px;padding:12px 14px;background:var(--surface-2);border-radius:8px">
       <div style="font:400 11px/1.6 var(--font-ui)"><strong>🚀 Fast Growth</strong><br><span style="color:var(--text-light)">Liên tục học hỏi, chủ động thử nghiệm AI/automation, can đảm vượt nỗi sợ & đón nhận thử thách mới.</span></div>
@@ -1999,21 +2006,35 @@ const FF_RADAR = {
   Yến:  [8.8,  6.9, 5.0, 8.3, 8.0, 8.5],
 };
 
-// Feedforward avg score per member — scores: [Q1 est ×3, Apr est, Q2'26 actual avg]
-// Q1 estimates based on Q2 trend; Q2 May = confirmed score from PDF
+// Member metadata only — avg computed from FF_RADAR
 const FF_MONTHLY = {
-  months: ['Jan','Feb','Mar','Apr','May'],
   members: [
-    {m:'Én',   t:'Brand',  color:'#E91E63', scores:[8.7, 8.8, 8.9, null, 9.0]},
-    {m:'Kiệt', t:'Growth', color:'#a78bfa', scores:[6.3, 6.4, 6.5, null, 6.6]},
-    {m:'Lộc',  t:'Growth', color:'#0891b2', scores:[6.8, 6.9, 7.0, null, 7.1]},
-    {m:'Phát', t:'Brand',  color:'#2196F3', scores:[5.8, 5.9, 6.0, null, 6.1]},
-    {m:'Quăn', t:'Growth', color:'#f59e0b', scores:[6.8, 6.9, 7.0, null, 7.1]},
-    {m:'Sho',  t:'Design', color:'#0284c7', scores:[7.0, 7.1, 7.2, null, 7.3]},
-    {m:'Tân',  t:'Design', color:'#0ea5e9', scores:[6.3, 6.4, 6.5, null, 6.6]},
-    {m:'Yến',  t:'Brand',  color:'#f472b6', scores:[7.3, 7.4, 7.5, null, 7.6]},
+    {m:'Én',   t:'Brand',  color:'#E91E63'},
+    {m:'Kiệt', t:'Growth', color:'#a78bfa'},
+    {m:'Lộc',  t:'Growth', color:'#0891b2'},
+    {m:'Phát', t:'Brand',  color:'#2196F3'},
+    {m:'Quăn', t:'Growth', color:'#f59e0b'},
+    {m:'Sho',  t:'Design', color:'#0284c7'},
+    {m:'Tân',  t:'Design', color:'#0ea5e9'},
+    {m:'Yến',  t:'Brand',  color:'#f472b6'},
   ]
 };
+
+// Strengths & growth areas — extracted from Q2'26 PDF summaries
+const FF_SUMMARY = {
+  Én:   {s:'Responsibility (100%) & Integrity (95%) & Team (94%)', g:'Fast Growth (67%) — cơ hội đầu tư thêm vào thử nghiệm & AI'},
+  Kiệt: {s:'Integrity (91%)', g:'User-First (47%) & Fast Growth (52%) — 2 chiều cần tập trung nhất'},
+  Lộc:  {s:'Integrity (92%) & Energy (82%)', g:'User-First (50%) — đặt người dùng vào trung tâm quyết định'},
+  Phát: {s:'Integrity (81%)', g:'Responsibility (42%) & User-First (43%) — cần cải thiện'},
+  Quăn: {s:'Team (86%) & Energy (83%)', g:'User-First (33%) — chiều thấp nhất, nhiều dư địa bứt phá'},
+  Sho:  {s:'Fast Growth (94%) & Integrity (94%) — 2 chiều hàng đầu team', g:'User-First (33%) — cần đặt người dùng làm trung tâm hơn'},
+  Tân:  {s:'Integrity (89%)', g:'User-First (33%) & Fast Growth (55%) — 2 chiều cần đầu tư thêm'},
+  Yến:  {s:'Fast Growth (88%) & Energy (85%) — cục pin của team', g:'User-First (50%) — chiều cần bứt phá nhất'},
+};
+
+// Quarter data registry — add future quarters here
+const FF_QUARTER_DATA = {"Q2'26": FF_RADAR};
+let ffActiveQuarter = "Q2'26";
 
 // ── Headcount ─────────────────────────────────────────────────────────
 // HC_DATA: [name, track, vert, costType(working|non-working), amt, desc, contractType]
@@ -2042,84 +2063,93 @@ const HC_DATA = [
   ['VEH Vouchers',  'Vertical', 'VEH','working',     0.5, 'Vouchers – VEH supply',                      'Operation'],
 ];
 function renderHC() {
-  if (S.charts.has('chartFFTrend')) return;
+  const members = FF_MONTHLY.members;
 
-  // Quarterly labels — Q2'26 starts from Apr (index 3 in Jan-based monthly data)
-  // We show Q1'26 avg (Jan-Mar) + Apr + May as stepping stones into Q2
-  const Q_LABELS = ["Q1'26", "Apr'26", "May'26"];
-  const qScores = m => {
-    const q1 = (m.scores.slice(0,3).reduce((a,b)=>a+b,0)/3);
-    return [q1, m.scores[3] ?? null, m.scores[4] ?? null];
-  };
+  // Q2'26 avg score per member — horizontal bar chart
+  if (!S.charts.has('chartFFTrend')) {
+    const avgs = members.map(m => {
+      const d = FF_RADAR[m.m]; return d ? +(d.reduce((a,b)=>a+b,0)/d.length*10).toFixed(1) : null;
+    });
+    makeChart('chartFFTrend',{type:'bar',data:{
+      labels: members.map(m=>m.m),
+      datasets:[{
+        label:"Q2'26 Avg (%)",
+        data: avgs,
+        backgroundColor: members.map(m=>m.color+'CC'),
+        borderRadius:5, barThickness:22,
+      }]
+    },options:{
+      indexAxis:'y', responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{display:false},
+        tooltip:{callbacks:{label:ctx=>`Q2'26 Avg: ${ctx.raw}%`}}},
+      scales:{
+        x:{min:0,max:100,grid:{display:false},ticks:{callback:v=>v+'%',font:{size:10}}},
+        y:{grid:{display:false},ticks:{font:{size:11}}},
+      }
+    }});
+  }
 
-  // FF Quarterly Trend chart
-  makeChart('chartFFTrend',{type:'line',data:{
-    labels: Q_LABELS,
-    datasets: FF_MONTHLY.members.map(m=>({
-      label: m.m,
-      data: qScores(m),
-      borderColor: m.color,
-      backgroundColor: m.color+'20',
-      fill: false, borderWidth: 2, pointRadius: 5, tension: .3,
-    }))
-  },options:{
-    responsive:true,maintainAspectRatio:false,
-    interaction:{mode:'index',intersect:false},
-    plugins:{legend:{position:'bottom'}},
-    scales:{
-      x:{grid:{display:false}},
-      y:{min:6,max:10,grid:{color:'#E8EDEF'},ticks:{font:{size:11,family:"'Inter',-apple-system,sans-serif"},stepSize:.5,color:'#6b7280'}}
-    },
-    elements:{line:{tension:.3},point:{radius:5,hoverRadius:7}}
-  }});
-
-  // FF table — Q1 avg + Apr + May + Q2 avg so far
+  // Table: Member | Track | 6 dims | Avg
   const ffTb = document.getElementById('ff-tbody');
-  ffTb.innerHTML = FF_MONTHLY.members.map(m=>{
-    const q1avg = (m.scores.slice(0,3).reduce((a,b)=>a+b,0)/3).toFixed(1);
-    const apr = m.scores[3]?.toFixed(1) ?? '—';
-    const may = m.scores[4]?.toFixed(1) ?? '—';
-    const q2vals = [m.scores[3],m.scores[4]].filter(v=>v!=null);
-    const q2avg = q2vals.length ? (q2vals.reduce((a,b)=>a+b,0)/q2vals.length).toFixed(1) : '—';
+  if (ffTb) ffTb.innerHTML = members.map(m=>{
+    const d = FF_RADAR[m.m] || [];
+    const avg = d.length ? Math.round(d.reduce((a,b)=>a+b,0)/d.length*10) : null;
+    const dimCells = d.map((v,i)=>{
+      const pct = Math.round(v*10);
+      const clr = pct>=80?'var(--green)':pct>=60?'var(--text)':'var(--red)';
+      return `<td class="mono" style="color:${clr}">${pct}%</td>`;
+    }).join('');
     return `<tr>
-      <td style="font:600 13px/1 var(--font-ui);color:${m.color}">${m.m}</td>
-      <td><span style="padding:2px 8px;border-radius:12px;font:600 10px/1.4 var(--font-ui);background:${m.color}22;color:${m.color}">${m.t}</span></td>
-      <td class="mono">${q1avg}</td>
-      <td class="mono">${apr}</td>
-      <td class="mono">${may}</td>
-      <td class="mono"><strong>${q2avg}</strong></td>
+      <td style="font:600 12px/1 var(--font-ui);color:${m.color}">${m.m}</td>
+      <td><span style="padding:2px 7px;border-radius:10px;font:600 10px/1.4 var(--font-ui);background:${m.color}22;color:${m.color}">${m.t}</span></td>
+      ${dimCells}
+      <td class="mono"><strong>${avg!=null?avg+'%':'—'}</strong></td>
     </tr>`;
   }).join('');
 
-  // Inline spider charts — 3 per row, with avg score + QoQ overlay
+  renderFFSpiderGrid();
+}
+
+function setFFQuarter(el, q) {
+  ffActiveQuarter = q;
+  document.querySelectorAll('#ff-quarter-chips .chip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+  // destroy existing spider charts so they re-render with new quarter data
+  FF_MONTHLY.members.forEach(m=>{
+    const k=`ff-spider-${m.m}`; if(S.charts.has(k)){S.charts.get(k).destroy();S.charts.delete(k);}
+  });
+  renderFFSpiderGrid();
+}
+
+function renderFFSpiderGrid() {
   const grid = document.getElementById('ff-spider-grid');
   if (!grid) return;
-  grid.innerHTML = FF_MONTHLY.members.map(m=>{
-    const data = FF_RADAR[m.m] || [];
-    const avg = data.length ? (data.reduce((a,b)=>a+b,0)/data.length) : null;
-    const q1avg = (m.scores.slice(0,3).reduce((a,b)=>a+b,0)/3);
-    const q2vals = [m.scores[3],m.scores[4]].filter(v=>v!=null);
-    const q2avg = q2vals.length ? q2vals.reduce((a,b)=>a+b,0)/q2vals.length : null;
-    const qoq = (q2avg!=null&&q1avg>0) ? ((q2avg-q1avg)/q1avg*100) : null;
-    const qoqHtml = qoq!=null ? `<span style="font:600 10px/1.4 var(--font-ui);color:${qoq>=0?'var(--green)':'var(--red)'};margin-left:6px">${qoq>=0?'↑':'↓'}${Math.abs(qoq).toFixed(1)}% QoQ</span>` : '';
+  const members = FF_MONTHLY.members;
+  const qData = FF_QUARTER_DATA[ffActiveQuarter] || FF_RADAR;
+
+  grid.innerHTML = members.map(m=>{
+    const data = qData[m.m] || [];
+    const avg = data.length ? Math.round(data.reduce((a,b)=>a+b,0)/data.length*10) : null;
+    const sum = FF_SUMMARY[m.m];
     return `
-    <div class="chart-card" id="ff-spider-wrap-${m.m}">
+    <div class="chart-card" id="ff-spider-wrap-${m.m}" onclick="openSpider('${m.m}','${m.t}','${m.color}')" style="cursor:pointer">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
         <div style="display:flex;align-items:center;gap:8px">
           <span style="font:700 13px/1 var(--font-ui);color:${m.color}">${m.m}</span>
           <span style="padding:2px 8px;border-radius:10px;font:600 10px/1.4 var(--font-ui);background:${m.color}22;color:${m.color}">${m.t}</span>
         </div>
-        <div style="text-align:right">
-          ${avg!=null?`<div style="font:700 14px/1 var(--font-ui);color:${m.color}">${avg.toFixed(1)}<span style="font-size:10px;color:var(--text-light)">/10</span></div>`:''}
-          ${qoqHtml}
-        </div>
+        ${avg!=null?`<div style="font:700 15px/1 var(--font-ui);color:${m.color}">${avg}<span style="font-size:10px;color:var(--text-light)">%</span></div>`:''}
       </div>
-      <div style="position:relative;height:200px"><canvas id="ff-spider-${m.m}"></canvas></div>
+      <div style="position:relative;height:190px"><canvas id="ff-spider-${m.m}"></canvas></div>
+      ${sum?`<div style="margin-top:8px;padding:6px 8px;background:var(--surface-2);border-radius:6px;font:400 10px/1.5 var(--font-ui)">
+        <div style="color:#16a34a">✦ ${sum.s}</div>
+        <div style="color:var(--text-light);margin-top:3px">→ ${sum.g}</div>
+      </div>`:''}
     </div>`;
   }).join('');
 
-  FF_MONTHLY.members.forEach(m=>{
-    const data = FF_RADAR[m.m];
+  members.forEach(m=>{
+    const data = qData[m.m];
     if (!data) return;
     const c = new Chart(document.getElementById(`ff-spider-${m.m}`).getContext('2d'),{
       type:'radar',
@@ -2130,9 +2160,9 @@ function renderHC() {
       },
       options:{
         responsive:true,maintainAspectRatio:false,
-        plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>` ${ctx.label}: ${ctx.raw.toFixed(1)}`}}},
+        plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>` ${ctx.label}: ${Math.round(ctx.raw*10)}%`}}},
         scales:{r:{min:0,max:10,ticks:{stepSize:2,font:{size:9},backdropColor:'transparent'},
-          pointLabels:{font:{size:10,family:"'Inter',sans-serif"}},
+          pointLabels:{font:{size:9,family:"'Inter',sans-serif"}},
           grid:{color:'#e5e7eb'},angleLines:{color:'#e5e7eb'}}}
       }
     });
@@ -2151,7 +2181,7 @@ function openSpider(name, track, color) {
   document.getElementById('spider-scores').innerHTML = FF_DIMS.map((d,i)=>`
     <div style="display:flex;justify-content:space-between;padding:4px 8px;background:var(--surface-2);border-radius:5px;font:400 11px/1.4 var(--font-ui)">
       <span style="color:var(--text-light)">${d}</span>
-      <strong style="color:${color}">${data[i].toFixed(1)}</strong>
+      <strong style="color:${color}">${Math.round(data[i]*10)}%</strong>
     </div>`).join('');
   if (S.charts.has('chartSpider')) S.charts.get('chartSpider').destroy();
   const c = new Chart(document.getElementById('chartSpider').getContext('2d'),{
@@ -2321,13 +2351,13 @@ function renderMktBars(key, type) {
       });
     });
   }};
-  const h=Math.max(180, idxs.length*(13*VERTS.length+28)+70);
+  const h=Math.max(200, idxs.length*(13*VERTS.length+42)+80);
   const wrap=el.closest('[style*="position:relative"]')||el.parentElement;
   wrap.style.height=h+'px';
   if(S.charts.has(chartId)){S.charts.get(chartId).destroy();S.charts.delete(chartId);}
   S.charts.set(chartId,new Chart(el.getContext('2d'),{type:'bar',data:{labels,datasets},plugins:[dlPlugin],
     options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
-      layout:{padding:{right:110}},
+      layout:{padding:{right:140}},
       plugins:{legend:{position:'bottom',labels:{font:{size:9},padding:8}},
         tooltip:{callbacks:{label:ctx=>{const act=ctx.dataset.actualData?.[ctx.dataIndex];return act!=null?` ${ctx.dataset.label}: ${fmtNum(act)} (${Math.round(ctx.raw)}%)`:` ${ctx.dataset.label}: ${Math.round(ctx.raw)}%`;}}}},
       scales:{
