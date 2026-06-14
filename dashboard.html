@@ -612,10 +612,10 @@ body{font-family:var(--font-ui);background:var(--bg);color:var(--text);font-size
   </div>
   <div id="sub-budget">
     <!-- Budget by Track + 2 pie charts in one row -->
-    <div style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:12px;margin-bottom:16px;align-items:start">
-      <div class="card">
+    <div style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:12px;margin-bottom:16px;align-items:stretch">
+      <div class="card" style="display:flex;flex-direction:column">
         <div class="kpi-label" style="margin-bottom:10px">Budget by Track (Jan–May)</div>
-        <div id="budget-track-bars"></div>
+        <div id="budget-track-bars" style="flex:1"></div>
       </div>
       <div class="chart-card">
         <div class="chart-title">By Contract Type</div>
@@ -1247,7 +1247,7 @@ function renderPL() {
   const merDatasets = [
     {label:'All',data:months.map((_,i)=>totalSpendM(i)>0?totalRevM(i)/totalSpendM(i):null),borderColor:C.all,pointRadius:3,borderWidth:2,tension:.3},
     ...VERTS4.map((v,vi)=>({label:v,data:months.map((_,i)=>{
-      if (v==='VEH'&&i===0) return null; // VEH Jan excluded (no data)
+      if (v==='VEH'&&(i===0||i===1)) return null; // VEH Jan+Feb excluded (no data)
       const s=d.spend[v]?.[i]||0;return s>0?(d.revenue[v]?.[i]||0)/s:null;}),
       borderColor:COLORS4[vi],pointRadius:3,borderWidth:2,tension:.3}))
   ];
@@ -1309,6 +1309,7 @@ const TRACKS = ['Brand','Growth','SEO','Vertical'];
 const TRACK_CLR = {Brand:C.pty,Growth:C.purple,SEO:C.gds,Vertical:C.orange};
 let budgetVert = 'ALL';
 let budgetTrack = 'ALL';
+let costDetailPage = 0;
 
 function setBudgetVert(v, el) {
   budgetVert = v;
@@ -1320,12 +1321,14 @@ function setBudgetVert(v, el) {
     }
   });
   if (!S.data) return;
+  costDetailPage = 0;
   ['chartContractType','chartCostType','chartMonthlySpend'].forEach(k=>{if(S.charts.has(k)){S.charts.get(k).destroy();S.charts.delete(k);}});
   renderBudgetPacing();
 }
 
 function setBudgetTrack(t, el) {
   budgetTrack = t;
+  costDetailPage = 0;
   document.querySelectorAll('#budget-track-filter .chip').forEach(c => {
     c.className = 'chip';
     if (c.dataset.t === t) c.classList.add('a-' + t.toLowerCase());
@@ -1340,42 +1343,51 @@ function renderCostDetail() {
   const hasActData = activityRows.some(r => r.months.some(m => m > 0));
   const filtVert = budgetVert;
   const filtTrack = budgetTrack;
+  const PAGE_SIZE = 10;
+  const fmtM = v => { if (!v) return ''; const m=v/1e6; return (m>=100?Math.round(m):+m.toFixed(1))+'M'; };
+
+  const renderPager = (page, total) => {
+    const pages = Math.ceil(total/PAGE_SIZE);
+    if (pages <= 1) return '';
+    return `<div style="display:flex;align-items:center;gap:8px;margin-top:10px;font:400 11px/1 var(--font-ui)">
+      <button onclick="costDetailPage=Math.max(0,costDetailPage-1);renderCostDetail()" style="padding:4px 10px;border:1px solid var(--border);border-radius:5px;cursor:pointer;background:var(--card-bg);font:400 11px/1 var(--font-ui)"${page===0?' disabled':''}>← Trước</button>
+      <span style="color:var(--navy-60)">Trang ${page+1} / ${pages} &nbsp;(${total} mục)</span>
+      <button onclick="costDetailPage=Math.min(${pages-1},costDetailPage+1);renderCostDetail()" style="padding:4px 10px;border:1px solid var(--border);border-radius:5px;cursor:pointer;background:var(--card-bg);font:400 11px/1 var(--font-ui)"${page>=pages-1?' disabled':''}>Tiếp →</button>
+    </div>`;
+  };
 
   if (hasActData) {
-    // Use activityRows data
-    let rows = activityRows.filter(r => {
+    let allRows = activityRows.filter(r => {
       if (filtTrack !== 'ALL' && (r.team||'') !== filtTrack) return false;
       if (filtVert !== 'ALL' && (r.vert||'').toUpperCase() !== filtVert) return false;
       return r.months.some(m => m > 0);
     });
-    if (!rows.length) {
+    if (!allRows.length) {
       detailEl.innerHTML = `<div style="padding:16px;color:var(--text-faint);font:400 12px/1.5 var(--font-ui)">Không có data. Paste dữ liệu vào bảng Activity bên tab Data Input.</div>`;
       return;
     }
+    costDetailPage = Math.min(costDetailPage, Math.ceil(allRows.length/PAGE_SIZE)-1);
+    const rows = allRows.slice(costDetailPage*PAGE_SIZE, costDetailPage*PAGE_SIZE+PAGE_SIZE);
     const months5 = MONTHS.slice(0, ACT);
     detailEl.innerHTML = `
     <div style="overflow-x:auto">
-    <table class="itable" style="min-width:860px">
+    <table class="itable" style="min-width:820px">
       <thead><tr>
-        <th style="text-align:left;width:180px">Activity</th>
         <th style="text-align:left;width:55px">Vertical</th>
-        <th style="text-align:left;width:60px">Track</th>
+        <th style="text-align:left;width:180px">Activity</th>
         <th style="text-align:left;width:80px">Contract</th>
         <th style="text-align:left;width:70px">Cost type</th>
-        ${months5.map(m=>`<th>${m} (M đ)</th>`).join('')}
-        <th style="font-weight:700">Total (M đ)</th>
+        ${months5.map(m=>`<th>${m}</th>`).join('')}
+        <th style="font-weight:700">Total</th>
       </tr></thead>
       <tbody>
       ${rows.map(row => {
-        const clr = {PTY:'var(--pty)',JOB:'var(--job)',VEH:'var(--veh)',GDS:'var(--gds)',PARENT:'var(--purple)'}[(row.vert||'').toUpperCase()]||'var(--text)';
         const tClr = TRACK_CLR[row.team] || 'var(--text-light)';
-        const fmtM = v => { if (!v) return ''; const m=v/1e6; return (m>=100?Math.round(m):+m.toFixed(1))+'M'; };
         const mVals = row.months.slice(0,ACT).map(v => fmtM(v));
         const total = row.months.slice(0,ACT).reduce((s,v)=>s+v,0);
         return `<tr>
-          <td style="text-align:left;font-size:11px;white-space:normal;padding-left:6px">${row.activities}</td>
           <td style="text-align:left"><span class="vtag vtag-${(row.vert||'').toLowerCase()}">${row.vert}</span></td>
-          <td style="text-align:left"><span style="padding:1px 6px;border-radius:4px;font:600 10px/1.5 var(--font-ui);background:${tClr}22;color:${tClr}">${row.team}</span></td>
+          <td style="text-align:left;font-size:11px;white-space:normal;padding-left:6px">${row.activities}</td>
           <td style="text-align:left;font-size:11px">${row.contract}</td>
           <td style="text-align:left"><span style="padding:1px 6px;border-radius:4px;font:600 9px/1.5 var(--font-ui);background:${(row.costType||'').toLowerCase().includes('non')?'var(--navy-10)':'var(--green-bg)'};color:${(row.costType||'').toLowerCase().includes('non')?'var(--navy-60)':'#00843D'}">${row.costType}</span></td>
           ${mVals.map(v=>`<td style="color:${v?'var(--text)':'var(--text-faint)'}">${v||'—'}</td>`).join('')}
@@ -1383,39 +1395,40 @@ function renderCostDetail() {
         </tr>`;
       }).join('')}
       </tbody>
-    </table></div>`;
+    </table></div>
+    ${renderPager(costDetailPage, allRows.length)}`;
   } else {
-    // Fallback to HC_DATA
     let items = HC_DATA;
     if (filtVert !== 'ALL') items = items.filter(r => r[2] === filtVert);
     if (filtTrack !== 'ALL') items = items.filter(r => r[1] === filtTrack);
     if (!items.length) { detailEl.innerHTML = `<div style="padding:16px;color:var(--text-faint);font:400 12px/1.5 var(--font-ui)">Không có data.</div>`; return; }
-    const rows2 = items.map(([n,track,vert,type,amt,desc,contract])=>{
-      const tClr = TRACK_CLR[track]||'var(--text-light)';
+    costDetailPage = Math.min(costDetailPage, Math.ceil(items.length/PAGE_SIZE)-1);
+    const pageItems = items.slice(costDetailPage*PAGE_SIZE, costDetailPage*PAGE_SIZE+PAGE_SIZE);
+    const rows2 = pageItems.map(([n,track,vert,type,amt,desc,contract])=>{
       return `<tr>
-        <td style="text-align:left;font-size:11px">${n}</td>
         <td style="text-align:left"><span class="vtag vtag-${vert.toLowerCase()}">${vert}</span></td>
-        <td style="text-align:left"><span style="padding:1px 6px;border-radius:4px;font:600 10px/1.5 var(--font-ui);background:${tClr}22;color:${tClr}">${track}</span></td>
+        <td style="text-align:left;font-size:11px">${n}</td>
         <td style="text-align:left;font-size:11px">${contract||''}</td>
         <td style="text-align:left"><span style="padding:1px 6px;border-radius:4px;font:600 9px/1.5 var(--font-ui);background:${type==='working'?'var(--green-bg)':'var(--navy-10)'};color:${type==='working'?'#00843D':'var(--navy-60)'}">${type}</span></td>
         <td style="font:600 12px/1 var(--font-ui);color:var(--text)">${amt.toFixed(1)} M đ</td>
         <td style="font-size:10px;color:var(--text-light)">${desc||''}</td>
       </tr>`;
     }).join('');
-    detailEl.innerHTML = `<div style="overflow-x:auto"><table class="itable" style="min-width:700px">
+    detailEl.innerHTML = `<div style="overflow-x:auto"><table class="itable" style="min-width:680px">
       <thead><tr>
-        <th style="text-align:left">Name</th>
         <th style="text-align:left">Vertical</th>
-        <th style="text-align:left">Track</th>
+        <th style="text-align:left">Name</th>
         <th style="text-align:left">Contract</th>
         <th style="text-align:left">Type</th>
         <th class="r">Amount (M đ)</th>
         <th style="text-align:left">Description</th>
       </tr></thead>
       <tbody>${rows2}</tbody>
-    </table></div>`;
+    </table></div>
+    ${renderPager(costDetailPage, items.length)}`;
   }
 }
+function _resetCostDetailPage() { costDetailPage = 0; }
 
 function renderBudgetPacing() {
   const d = S.data; if (!d) return;
@@ -1485,16 +1498,40 @@ function renderBudgetPacing() {
     datasets:[{data:[wAmt||1,nwAmt||1],backgroundColor:['#6366f1CC','#e2e8f0'],borderWidth:0}]
   },options:mkDonutOpts(),plugins:[arcLabelPlugin]});
 
-  // Monthly spend chart — filtered by budgetVert
+  // Monthly spend chart — stacked by vertical with total labels
   const spendVerts = budgetVert==='ALL' ? ['PTY','JOB','VEH','GDS','PARENT'] : [budgetVert];
-  const totalSpendFull = MONTHS.map((_,i)=>spendVerts.reduce((s,v)=>(d.spend[v]?.[i]||0)+s,0));
-  makeChart('chartMonthlySpend',{type:'bar',data:{
-    labels:MONTHS,
-    datasets:[
-      {label:'Actual (Jan–May)',data:MONTHS.map((_,i)=>i<ACT?totalSpendFull[i]:null),backgroundColor:C.purple+'CC',borderRadius:3},
-      {label:'Forecast (Jun–Dec)',data:MONTHS.map((_,i)=>i>=ACT?totalSpendFull[i]:null),backgroundColor:C.purple+'33',borderRadius:3},
-    ]
-  },options:{...barOpts(),scales:{...barOpts().scales,y:{...barOpts().scales.y,ticks:{callback:v=>v+'B'}}}}});
+  const VERT_CLR_SPEND = {PTY:C.pty,JOB:C.job,VEH:C.veh,GDS:C.gds,PARENT:C.purple};
+  const spendStackDatasets = spendVerts.map(v => ({
+    label: v,
+    data: MONTHS.map((_,i) => {
+      const val = d.spend[v]?.[i] || 0;
+      return val > 0 ? val : null;
+    }),
+    backgroundColor: MONTHS.map((_,i) => (VERT_CLR_SPEND[v]||C.purple) + (i < ACT ? 'CC' : '33')),
+    borderRadius: 0,
+    stack: 'spend',
+  }));
+  const spendTotalPlugin = {id:'spendTotal',afterDatasetsDraw(chart){
+    const {ctx,data}=chart;
+    const nLabels=data.labels.length;
+    const lastMeta=chart.getDatasetMeta(chart.data.datasets.length-1);
+    for(let xi=0;xi<nLabels;xi++){
+      const total=chart.data.datasets.reduce((s,ds)=>s+(ds.data[xi]||0),0);
+      if(total<=0) continue;
+      const bar=lastMeta.data[xi]; if(!bar) continue;
+      ctx.save();
+      ctx.fillStyle='#374151';ctx.font='bold 10px Inter,sans-serif';
+      ctx.textAlign='center';ctx.textBaseline='bottom';
+      ctx.fillText(total.toFixed(2)+'B',bar.x,bar.y-3);
+      ctx.restore();
+    }
+  }};
+  makeChart('chartMonthlySpend',{type:'bar',data:{labels:MONTHS,datasets:spendStackDatasets},
+    options:{...barOpts(),plugins:{legend:{position:'bottom',labels:{font:{size:10},padding:8}},tooltip:{mode:'index',intersect:false}},
+      scales:{...barOpts().scales,
+        x:{grid:{display:false},stacked:true},
+        y:{...barOpts().scales.y,stacked:true,ticks:{callback:v=>v+'B'}}}},
+    plugins:[spendTotalPlugin]});
 
   // Cost table
   renderCostTable();
@@ -2051,8 +2088,11 @@ const MKT_PERF = {
 
 // ── MKT Performance state + helpers ──────────────────────────────────
 const mktState = {};
+let oaMonth = ACT - 1;
+
 function getMktVert(key) { return (mktState[key]||{}).vert||'PTY'; }
 function getMktMonth(key) { return (mktState[key]||{}).month??(ACT-1); }
+function getMktHidden(key,type) { return (mktState[key]||{})[type] || new Set(); }
 
 function setMktVert(el, key) {
   if (!mktState[key]) mktState[key]={};
@@ -2071,9 +2111,22 @@ function setMktMonth(el, key) {
   document.querySelectorAll(`[data-mk="${key}"]`).forEach(c=>{
     c.className='chip'; if(c.dataset.mi===el.dataset.mi) c.classList.add('active');
   });
-  renderMktDetail(key); renderMktPivot(key);
+  renderMktSection(key);
 }
-function renderMktSection(k) { renderMktChart(k); renderMktDetail(k); renderMktPivot(k); }
+function toggleMktMetric(el, key, type, mi) {
+  if (!mktState[key]) mktState[key]={};
+  if (!mktState[key][type]) mktState[key][type]=new Set();
+  const h=mktState[key][type];
+  if(h.has(mi)) h.delete(mi); else h.add(mi);
+  el.classList.toggle('muted', h.has(mi));
+  renderMktBars(key, type);
+}
+function setOAMonth(el, mi) {
+  oaMonth = mi;
+  document.querySelectorAll('[data-oam]').forEach(c=>{c.className='chip';if(+c.dataset.oam===mi)c.classList.add('active');});
+  renderOAFunnel();
+}
+function renderMktSection(k) { renderMktBars(k,'input'); renderMktBars(k,'output'); renderMktDetail(k); renderMktPivot(k); }
 
 function fmtNum(v) {
   if (v==null) return '—'; const n=Number(v); if(isNaN(n)) return String(v);
@@ -2089,44 +2142,57 @@ function _pbadge(p) {
   if(p==null) return '<span style="color:var(--text-faint)">—</span>';
   const bg=p>=100?'var(--green-bg)':p>=80?'var(--orange-bg)':'var(--red-bg)';
   const fg=p>=100?'#00843D':p>=80?'var(--orange)':'var(--red)';
-  return `<span style="padding:1px 6px;border-radius:4px;font:700 10px/1.5 var(--font-ui);background:${bg};color:${fg}">${Math.round(p)}%</span>`;
+  return `<span style="padding:1px 5px;border-radius:4px;font:700 10px/1.5 var(--font-ui);background:${bg};color:${fg}">${Math.round(p)}%</span>`;
 }
 
-function renderMktChart(key) {
-  const sec=MKT_PERF[key], vert=getMktVert(key);
-  const chartId='chartMKTLine_'+key, el=document.getElementById(chartId); if(!el) return;
-  const vd=sec.data[vert];
-  const MCLR=['#6366f1','#f59e0b','#10b981','#ef4444','#0ea5e9','#8b5cf6','#14b8a6'];
-  const datasets=sec.labels.map((label,mi)=>{
-    const isOut=sec.isOutput[mi], clr=isOut?MCLR[mi%MCLR.length]:'#9ca3af';
-    return {label:(isOut?'▸ ':'')+label,
-      data:MONTHS.slice(0,ACT).map((_,mo)=>_mktGetV(vd,mi,mo)),
-      borderColor:clr,backgroundColor:clr+'22',borderWidth:isOut?2:1.5,
-      borderDash:isOut?[]:[5,4],pointRadius:3,tension:.3,fill:false};
-  });
-  if(S.charts.has(chartId)){S.charts.get(chartId).destroy();S.charts.delete(chartId);}
-  S.charts.set(chartId,new Chart(el.getContext('2d'),{type:'line',
-    data:{labels:MONTHS.slice(0,ACT),datasets},
-    options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
-      plugins:{legend:{position:'bottom',labels:{font:{size:9},padding:8,boxWidth:16}}},
-      scales:{x:{grid:{display:false},ticks:{font:{size:10}}},
-        y:{grid:{color:'#E8EDEF'},ticks:{font:{size:10},callback:v=>fmtNum(v)}}}}
+// Horizontal bar chart: % achievement per metric, grouped by vertical
+function renderMktBars(key, type) {
+  const sec=MKT_PERF[key], mo=getMktMonth(key);
+  const chartId=`chartMKT_${key}_${type}`, el=document.getElementById(chartId); if(!el) return;
+  const hidden=getMktHidden(key,type);
+  const VERTS=['PTY','JOB','VEH','GDS'], VCOLS=[C.pty,C.job,C.veh,C.gds];
+  const isOutType = type==='output';
+  const idxs = sec.labels.map((_,i)=>i).filter(i=>sec.isOutput[i]===isOutType && !hidden.has(i));
+  if(!idxs.length){
+    if(S.charts.has(chartId)){S.charts.get(chartId).destroy();S.charts.delete(chartId);}
+    el.parentElement.style.height='40px';
+    el.parentElement.innerHTML='<div style="padding:12px;font:400 11px/1 var(--font-ui);color:var(--text-faint);text-align:center">Tất cả metrics đã bị ẩn</div>';
+    return;
+  }
+  const labels=idxs.map(i=>(isOutType?'▸ ':'')+sec.labels[i]);
+  const datasets=VERTS.map((v,vi)=>({
+    label:v, backgroundColor:VCOLS[vi]+'CC', borderColor:VCOLS[vi], borderWidth:1, borderRadius:3,
+    data:idxs.map(i=>{
+      const vd=sec.data[v],hb=(sec.higherBetter||[])[i]!==false;
+      return _pa(_mktGetV(vd,i,mo),_mktGetT(vd,i,mo),hb);
+    }),
   }));
+  const h=Math.max(160, idxs.length*36+80);
+  el.parentElement.style.height=h+'px';
+  if(S.charts.has(chartId)){S.charts.get(chartId).destroy();S.charts.delete(chartId);}
+  S.charts.set(chartId,new Chart(el.getContext('2d'),{type:'bar',data:{labels,datasets},
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{position:'bottom',labels:{font:{size:9},padding:8}},
+        tooltip:{callbacks:{label:ctx=>ctx.raw!=null?` ${ctx.dataset.label}: ${Math.round(ctx.raw)}%`:' —'}}},
+      scales:{
+        x:{beginAtZero:true,max:140,grid:{color:'#E8EDEF'},ticks:{callback:v=>v+'%',font:{size:10}}},
+        y:{grid:{display:false},ticks:{font:{size:10},maxRotation:0}},
+      }}}));
 }
 
 function renderMktDetail(key) {
-  const sec=MKT_PERF[key], vert=getMktVert(key), mo=getMktMonth(key);
+  const sec=MKT_PERF[key], mo=getMktMonth(key);
   const el=document.getElementById('detailMKT_'+key); if(!el) return;
   const VERTS=['PTY','JOB','VEH','GDS'], VC={PTY:'var(--pty)',JOB:'var(--job)',VEH:'var(--veh)',GDS:'var(--gds)'};
   const rows=sec.labels.map((label,mi)=>{
     const isOut=sec.isOutput[mi], hb=(sec.higherBetter||[])[mi]!==false;
     const cells=VERTS.map(v=>{const vd=sec.data[v],a=_mktGetV(vd,mi,mo),t=_mktGetT(vd,mi,mo),p=_pa(a,t,hb);
-      return `<td style="text-align:right;padding:4px 8px"><div style="font:600 11px/1.3 var(--font-ui)">${fmtNum(a)}</div><div style="font:400 10px/1.2 var(--font-ui);color:var(--text-faint)">${t!=null?'/ '+fmtNum(t):''}</div>${p!=null?_pbadge(p):''}</td>`;
+      return `<td style="text-align:right;padding:3px 8px;white-space:nowrap"><span style="font:600 10px/1 var(--font-ui)">${fmtNum(a)}</span>${t!=null?`<span style="font:400 9px/1 var(--font-ui);color:var(--text-faint)"> / ${fmtNum(t)}</span>`:''} ${p!=null?_pbadge(p):''}</td>`;
     }).join('');
-    return `<tr style="${isOut?'background:var(--accent-light)':''}"><td style="padding:4px 8px;font:${isOut?'600':'400'} 11px/1.4 var(--font-ui);color:${isOut?'var(--accent)':'var(--text-light)'}">${isOut?'▸ ':''}${label}</td>${cells}</tr>`;
+    return `<tr style="${isOut?'background:var(--accent-light)':''}"><td style="padding:3px 8px;font:${isOut?'600':'400'} 10px/1.4 var(--font-ui);color:${isOut?'var(--accent)':'var(--text-light)'};white-space:nowrap">${isOut?'▸ ':''}${label}</td>${cells}</tr>`;
   }).join('');
   el.innerHTML=`<div class="chart-title mb-4">Detail — ${MONTHS[mo]} 2026 Actual vs Target</div>
-    <div style="overflow-x:auto"><table class="dt" style="font-size:11px"><thead><tr><th>Metric</th>${VERTS.map(v=>`<th class="r" style="color:${VC[v]}">${v}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div>`;
+    <div style="overflow-x:auto"><table class="dt" style="font-size:10px"><thead><tr><th>Metric</th>${VERTS.map(v=>`<th class="r" style="color:${VC[v]}">${v}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div>`;
 }
 
 function renderMktPivot(key) {
@@ -2137,28 +2203,26 @@ function renderMktPivot(key) {
   const rows=sec.labels.map((label,mi)=>{
     const isOut=sec.isOutput[mi];
     const cells=MONTHS.slice(0,ACT).map((_,mo)=>{const a=_mktGetV(vd,mi,mo),t=_mktGetT(vd,mi,mo);
-      return `<td style="text-align:right;padding:3px 8px;font:${a!=null?'600':'400'} 10px/1.4 var(--font-ui);color:${a!=null?'var(--text)':'var(--text-faint)'}">${fmtNum(a)}${t!=null?`<br><span style="font:400 9px/1 var(--font-ui);color:var(--text-faint)">/ ${fmtNum(t)}</span>`:''}</td>`;
+      return `<td style="text-align:right;padding:3px 8px;white-space:nowrap"><span style="font:${a!=null?'600':'400'} 10px/1 var(--font-ui);color:${a!=null?'var(--text)':'var(--text-faint)'}">${fmtNum(a)}</span>${t!=null?`<span style="font:400 9px/1 var(--font-ui);color:var(--text-faint)"> / ${fmtNum(t)}</span>`:''}</td>`;
     }).join('');
-    return `<tr style="${isOut?'background:var(--accent-light)':''}"><td style="padding:3px 8px;font:${isOut?'600':'400'} 10px/1.4 var(--font-ui);color:${isOut?'var(--accent)':'var(--text-light)'}">${isOut?'▸ ':''}${label}</td>${cells}</tr>`;
+    return `<tr style="${isOut?'background:var(--accent-light)':''}"><td style="padding:3px 8px;font:${isOut?'600':'400'} 10px/1.4 var(--font-ui);color:${isOut?'var(--accent)':'var(--text-light)'};white-space:nowrap">${isOut?'▸ ':''}${label}</td>${cells}</tr>`;
   }).join('');
   el.innerHTML=`<div style="font:400 10.5px/1.4 var(--font-ui);color:var(--navy-60);margin-bottom:6px">Vertical: <strong style="color:${VC[vert]}">${vert}</strong> · Actual / Target</div>
-    <div style="overflow-x:auto"><table class="dt" style="font-size:10px"><thead><tr><th style="text-align:left">Metric</th>${MONTHS.slice(0,ACT).map(m=>`<th class="r">${m}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div>`;
+    <div style="overflow-x:auto"><table class="dt" style="font-size:10px"><thead><tr><th style="text-align:left;white-space:nowrap">Metric</th>${MONTHS.slice(0,ACT).map(m=>`<th class="r">${m}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div>`;
 }
 
-// ── MKT Performance rendering ─────────────────────────────────────────
-function renderMKTPerf() {
-  const container=document.getElementById('mkt-perf-container'); if(!container) return;
+// ── Overall Achievement Funnel (re-renders on month change) ─────────────
+function renderOAFunnel() {
+  const el=document.getElementById('oa-funnel-content'); if(!el) return;
   const VERTS=['PTY','JOB','VEH','GDS'], VC={PTY:'var(--pty)',JOB:'var(--job)',VEH:'var(--veh)',GDS:'var(--gds)'};
-
-  // mini metric table for funnel blocks — output metrics only, May data
   const miniTable=(key)=>{
     const sec=MKT_PERF[key];
     const out=sec.labels.map((l,i)=>({l,i})).filter(({i})=>sec.isOutput[i]);
     if(!out.length) return '';
     const rows=out.map(({l,i:mi})=>{
       const hb=(sec.higherBetter||[])[mi]!==false;
-      const cells=VERTS.map(v=>{const vd=sec.data[v],a=_mktGetV(vd,mi,ACT-1),t=_mktGetT(vd,mi,ACT-1),p=_pa(a,t,hb);
-        if(p==null) return `<td style="text-align:center;padding:2px 3px;font:400 9px/1.5 var(--font-ui);color:var(--text-faint)">—</td>`;
+      const cells=VERTS.map(v=>{const vd=sec.data[v],a=_mktGetV(vd,mi,oaMonth),t=_mktGetT(vd,mi,oaMonth),p=_pa(a,t,hb);
+        if(p==null) return `<td style="text-align:center;padding:2px 3px;color:var(--text-faint);font:400 9px/1 var(--font-ui)">—</td>`;
         const bg=p>=100?'var(--green-bg)':p>=80?'var(--orange-bg)':'var(--red-bg)';
         const fg=p>=100?'#00843D':p>=80?'var(--orange)':'var(--red)';
         return `<td style="text-align:center;padding:2px 3px"><span style="padding:1px 5px;border-radius:3px;font:700 9px/1.5 var(--font-ui);background:${bg};color:${fg}">${Math.round(p)}%</span></td>`;
@@ -2170,6 +2234,34 @@ function renderMKTPerf() {
       ${VERTS.map(v=>`<th style="text-align:center;font:700 9px/1 var(--font-ui);color:${VC[v]};padding:2px 4px">${v}</th>`).join('')}
     </tr></thead><tbody>${rows}</tbody></table></div>`;
   };
+  el.innerHTML=`
+    <div style="background:var(--pty-bg);border:2.5px solid var(--pty);border-radius:10px;padding:14px 20px">
+      <div style="font:700 13px/1 var(--font-ui);color:var(--pty);margin-bottom:2px">🎨 Branding</div>
+      <div style="font:400 10px/1.4 var(--font-ui);color:var(--text-light)">Brand reach · Brand keywords · Content · Social followers</div>
+      ${miniTable('branding')}
+    </div>
+    <!-- T-connector: center stem → horizontal bar → two legs -->
+    <div style="height:14px;display:flex;justify-content:center"><div style="width:3px;background:var(--pty)"></div></div>
+    <div style="height:3px;background:var(--pty);margin:0 25%"></div>
+    <div style="height:18px;display:flex;justify-content:space-between;margin:0 25%"><div style="width:3px;background:var(--pty)"></div><div style="width:3px;background:var(--pty)"></div></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+      <div style="background:var(--veh-bg);border:2.5px solid var(--veh);border-radius:10px;padding:14px 20px">
+        <div style="font:700 13px/1 var(--font-ui);color:var(--veh);margin-bottom:2px">📣 Digital Demand</div>
+        <div style="font:400 10px/1.4 var(--font-ui);color:var(--text-light)">DAU · DwL · Lead · Cost per unit</div>
+        ${miniTable('digital_demand')}
+      </div>
+      <div style="background:var(--purple-bg);border:2.5px solid var(--purple);border-radius:10px;padding:14px 20px">
+        <div style="font:700 13px/1 var(--font-ui);color:var(--purple);margin-bottom:2px">📱 App Growth</div>
+        <div style="font:400 10px/1.4 var(--font-ui);color:var(--text-light)">App installs · Activated users · D1 RR</div>
+        ${miniTable('app_growth')}
+      </div>
+    </div>`;
+}
+
+// ── MKT Performance rendering ─────────────────────────────────────────
+function renderMKTPerf() {
+  const container=document.getElementById('mkt-perf-container'); if(!container) return;
+  const VERTS=['PTY','JOB','VEH','GDS'], VC={PTY:'var(--pty)',JOB:'var(--job)',VEH:'var(--veh)',GDS:'var(--gds)'};
 
   const sects=[
     {key:'branding',label:'🎨 Branding'},
@@ -2178,61 +2270,54 @@ function renderMKTPerf() {
   ];
 
   let html=`
-  <div style="margin-bottom:16px"><div class="section-label">📊 Overall Achievement — May 2026</div></div>
+  <div style="margin-bottom:16px"><div class="section-label">📊 Overall Achievement — ${MONTHS[oaMonth]} 2026</div></div>
   <div class="card mb-24">
-    <div style="font:400 11px/1.4 var(--font-ui);color:var(--navy-60);margin-bottom:20px">Output metric achievement % vs target · May 2026</div>
-    <div style="max-width:760px;margin:0 auto">
-      <div style="background:var(--pty-bg);border:2.5px solid var(--pty);border-radius:10px;padding:14px 20px">
-        <div style="font:700 13px/1 var(--font-ui);color:var(--pty);margin-bottom:2px">🎨 Branding</div>
-        <div style="font:400 10px/1.4 var(--font-ui);color:var(--text-light)">Brand reach · Brand keywords · Content · Social followers</div>
-        ${miniTable('branding')}
-      </div>
-      <div style="position:relative;height:36px;margin:0 80px">
-        <div style="position:absolute;top:0;left:0;right:0;height:3px;background:var(--pty)"></div>
-        <div style="position:absolute;top:0;left:0;width:3px;height:100%;background:var(--pty);border-radius:0 0 2px 2px"></div>
-        <div style="position:absolute;top:0;right:0;width:3px;height:100%;background:var(--pty);border-radius:0 0 2px 2px"></div>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
-        <div style="background:var(--veh-bg);border:2.5px solid var(--veh);border-radius:10px;padding:14px 20px">
-          <div style="font:700 13px/1 var(--font-ui);color:var(--veh);margin-bottom:2px">📣 Digital Demand</div>
-          <div style="font:400 10px/1.4 var(--font-ui);color:var(--text-light)">DAU · DwL · Lead · Cost per unit</div>
-          ${miniTable('digital_demand')}
-        </div>
-        <div style="background:var(--purple-bg);border:2.5px solid var(--purple);border-radius:10px;padding:14px 20px">
-          <div style="font:700 13px/1 var(--font-ui);color:var(--purple);margin-bottom:2px">📱 App Growth</div>
-          <div style="font:400 10px/1.4 var(--font-ui);color:var(--text-light)">App installs · Activated users · D1 RR</div>
-          ${miniTable('app_growth')}
-        </div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;flex-wrap:wrap">
+      <span style="font:600 11px/1 var(--font-ui);color:var(--navy-60)">Tháng:</span>
+      <div class="chip-group">
+        ${MONTHS.slice(0,ACT).map((m,i)=>`<div class="chip${i===oaMonth?' active':''}" data-oam="${i}" onclick="setOAMonth(this,${i})">${m}</div>`).join('')}
       </div>
     </div>
+    <div style="max-width:760px;margin:0 auto" id="oa-funnel-content"></div>
   </div>`;
 
   sects.forEach(sm=>{
-    const chartId='chartMKTLine_'+sm.key;
+    const sec=MKT_PERF[sm.key];
+    const inIdxs=sec.labels.map((_,i)=>i).filter(i=>!sec.isOutput[i]);
+    const outIdxs=sec.labels.map((_,i)=>i).filter(i=>sec.isOutput[i]);
+    const mkChips=(idxs,type)=>idxs.map(i=>`<span class="chip" style="font:400 10px/1 var(--font-ui);cursor:pointer" onclick="toggleMktMetric(this,'${sm.key}','${type}',${i})">${sec.labels[i]}</span>`).join('');
     html+=`
     <div style="margin:28px 0 14px"><div class="section-label">${sm.label}</div></div>
     <div class="card mb-20">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap">
-        <span style="font:600 11px/1 var(--font-ui);color:var(--navy-60)">Vertical:</span>
-        <div class="chip-group" id="vertChip_${sm.key}">
-          ${VERTS.map((v,vi)=>`<div class="chip${vi===0?' a-'+v.toLowerCase():''}" data-vk="${sm.key}" data-v="${v}" onclick="setMktVert(this,'${sm.key}')" style="color:${VC[v]}">${v}</div>`).join('')}
-        </div>
-      </div>
-      <div class="chart-title mb-2">${sm.label.replace(/^[^ ]+ /,'')} — Monthly Trend</div>
-      <div style="font:400 11px/1.4 var(--font-ui);color:var(--navy-60);margin-bottom:10px">Solid lines = output metrics · Dashed = input metrics · Jan–May 2026</div>
-      <div style="position:relative;height:240px;margin-bottom:20px"><canvas id="${chartId}"></canvas></div>
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap">
         <span style="font:600 11px/1 var(--font-ui);color:var(--navy-60)">Tháng:</span>
         <div class="chip-group" id="monthChip_${sm.key}">
           ${MONTHS.slice(0,ACT).map((m,i)=>`<div class="chip${i===ACT-1?' active':''}" data-mk="${sm.key}" data-mi="${i}" onclick="setMktMonth(this,'${sm.key}')">${m}</div>`).join('')}
         </div>
+        <span style="font:600 11px/1 var(--font-ui);color:var(--navy-60);margin-left:8px">Vertical:</span>
+        <div class="chip-group" id="vertChip_${sm.key}">
+          ${VERTS.map((v,vi)=>`<div class="chip${vi===0?' a-'+v.toLowerCase():''}" data-vk="${sm.key}" data-v="${v}" onclick="setMktVert(this,'${sm.key}')" style="color:${VC[v]}">${v}</div>`).join('')}
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+        <div>
+          <div class="chart-title mb-2">Input metrics</div>
+          <div style="margin-bottom:6px;display:flex;flex-wrap:wrap;gap:4px">${mkChips(inIdxs,'input')}</div>
+          <div style="position:relative"><canvas id="chartMKT_${sm.key}_input"></canvas></div>
+        </div>
+        <div>
+          <div class="chart-title mb-2">▸ Output metrics</div>
+          <div style="margin-bottom:6px;display:flex;flex-wrap:wrap;gap:4px">${mkChips(outIdxs,'output')}</div>
+          <div style="position:relative"><canvas id="chartMKT_${sm.key}_output"></canvas></div>
+        </div>
       </div>
       <div id="detailMKT_${sm.key}"></div>
-      <div style="margin-top:20px"><div class="chart-title mb-6">Monthly Data — All Metrics × Months</div><div id="pivotMKT_${sm.key}"></div></div>
+      <div style="margin-top:16px"><div class="chart-title mb-4">Monthly Data — All Metrics × Months</div><div id="pivotMKT_${sm.key}"></div></div>
     </div>`;
   });
 
   container.innerHTML=html;
+  renderOAFunnel();
   sects.forEach(sm=>renderMktSection(sm.key));
 }
 
