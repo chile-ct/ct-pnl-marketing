@@ -1386,6 +1386,32 @@ function renderUE2() {
   const cac   = months.map((_,i) => { const nu=d.new_app_mau[i]; return nu>0 ? totalSpendM(i)*1e9/nu/1000 : null; }); // K VND
   const ltvcac = months.map((_,i) => ltv[i]!=null&&cac[i]>0 ? ltv[i]/cac[i] : null);
 
+  // Per-vertical calculations (needed for overallLvc before KPI display)
+  function vertLine(v) {
+    const rv=months.map((_,i)=>d.revenue[v]?.[i]||0);
+    const lv=months.map((_,i)=>d.leads[v]?.[i]||0);
+    const mv=months.map((_,i)=>d.vmau[v]?.[i]||0);
+    const sv=months.map((_,i)=>d.spend[v]?.[i]||0);
+    const vplV = rv.map((r,i)=>lv[i]>0?r*1e9/lv[i]/1e6:null);
+    const lpuV = lv.map((l,i)=>mv[i]>0?l/mv[i]:null);
+    const ltvV = vplV.map((v2,i)=>v2!=null&&lpuV[i]!=null?lpuV[i]*v2*LIFESPAN:null);
+    const cacV = sv.map((s,i)=>{
+      const nu=d.new_app_mau[i]; if(!nu) return null;
+      const vTot=['PTY','JOB','VEH','GDS'].reduce((sum,vv)=>(d.vmau[vv]?.[i]||0)+sum,0);
+      const share=vTot>0?(mv[i]||0)/vTot:0;
+      return share>0 ? s*1e9/(nu*share)/1000 : null;
+    });
+    const lvcV = ltvV.map((l,i)=>l!=null&&cacV[i]>0?l/cacV[i]:null);
+    return {vpl:vplV,ltv:ltvV,cac:cacV,lvc:lvcV};
+  }
+  const vertLinesAll = VERTS4.map(v => vertLine(v));
+  const overallLvc = months.map((_,i) => {
+    const vals = VERTS4.map((_,vi) => ({lvc:vertLinesAll[vi].lvc[i], spend:d.spend[VERTS4[vi]]?.[i]||0})).filter(x=>x.lvc!=null&&x.spend>0);
+    if (!vals.length) return null;
+    const totalSpend = vals.reduce((s,x)=>s+x.spend,0);
+    return vals.reduce((s,x)=>s+x.lvc*(x.spend/totalSpend),0);
+  });
+
   const li = ACT-1; // last month index
   document.getElementById('kpi-vpl').textContent   = fVND(vpl[li]);
   document.getElementById('kpi-lpu').textContent   = lpu[li]!=null  ? lpu[li].toFixed(4)    : '—';
@@ -1413,34 +1439,6 @@ function renderUE2() {
     scales:{x:{grid:{display:false}},y:{beginAtZero:true,grid:{color:'#E8EDEF'},ticks:{font:{size:11,family:"'Inter',-apple-system,sans-serif"}}}}
   });
 
-  // Per-vertical calculations
-  function vertLine(v) {
-    const rv=months.map((_,i)=>d.revenue[v]?.[i]||0);
-    const lv=months.map((_,i)=>d.leads[v]?.[i]||0);
-    const mv=months.map((_,i)=>d.vmau[v]?.[i]||0);
-    const sv=months.map((_,i)=>d.spend[v]?.[i]||0);
-    const vplV = rv.map((r,i)=>lv[i]>0?r*1e9/lv[i]/1e6:null);
-    const lpuV = lv.map((l,i)=>mv[i]>0?l/mv[i]:null);
-    const ltvV = vplV.map((v2,i)=>v2!=null&&lpuV[i]!=null?lpuV[i]*v2*LIFESPAN:null);
-    const cacV = sv.map((s,i)=>{
-      const nu=d.new_app_mau[i]; if(!nu) return null;
-      const vTot=['PTY','JOB','VEH','GDS'].reduce((sum,vv)=>(d.vmau[vv]?.[i]||0)+sum,0);
-      const share=vTot>0?(mv[i]||0)/vTot:0;
-      return share>0 ? s*1e9/(nu*share)/1000 : null;
-    });
-    const lvcV = ltvV.map((l,i)=>l!=null&&cacV[i]>0?l/cacV[i]:null);
-    return {vpl:vplV,ltv:ltvV,cac:cacV,lvc:lvcV};
-  }
-
-  // For 'Overall' LTV/CAC: spend-weighted average of per-vertical values
-  // (avoids denominator mismatch between vMAU-sum and new_app_mau-total)
-  const vertLinesAll = VERTS4.map(v => vertLine(v));
-  const overallLvc = months.map((_,i) => {
-    const vals = VERTS4.map((_,vi) => ({lvc:vertLinesAll[vi].lvc[i], spend:d.spend[VERTS4[vi]]?.[i]||0})).filter(x=>x.lvc!=null&&x.spend>0);
-    if (!vals.length) return null;
-    const totalSpend = vals.reduce((s,x)=>s+x.spend,0);
-    return vals.reduce((s,x)=>s+x.lvc*(x.spend/totalSpend),0);
-  });
   const overall = {
     lvc:overallLvc, vpl, ltv, cac
   };
