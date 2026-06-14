@@ -5,6 +5,12 @@ on:
     # 10:00 AM ICT = 03:00 UTC every day
     - cron: '0 3 * * *'
   workflow_dispatch:  # manual trigger
+  push:
+    branches: [main]
+    paths:
+      - 'dashboard.html'
+      - 'public/**'
+      - 'scripts/**'
 
 permissions:
   contents: write
