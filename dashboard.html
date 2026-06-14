@@ -652,23 +652,6 @@ body{font-family:var(--font-ui);background:var(--bg);color:var(--text);font-size
       </div>
     </div>
 
-    <!-- Cost Detail by Vertical (2 tables per row, grouped by Objective) -->
-    <div id="cost-detail-by-vert-grid" style="margin-bottom:20px"></div>
-
-    <!-- Cost detail by track (consolidated, filterable) -->
-    <div class="card mb-24">
-      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:14px">
-        <div class="chart-title" style="margin-bottom:0">Cost Detail by Track — from FC &amp; Actual</div>
-        <div class="chip-group" id="budget-track-filter">
-          <button class="chip a-all" data-t="ALL" onclick="setBudgetTrack('ALL',this)">All</button>
-          <button class="chip" data-t="Brand" onclick="setBudgetTrack('Brand',this)" style="color:var(--pty)">Brand</button>
-          <button class="chip" data-t="Growth" onclick="setBudgetTrack('Growth',this)" style="color:var(--purple)">Growth</button>
-          <button class="chip" data-t="SEO" onclick="setBudgetTrack('SEO',this)" style="color:var(--gds)">SEO</button>
-          <button class="chip" data-t="Vertical" onclick="setBudgetTrack('Vertical',this)" style="color:var(--orange)">Vertical</button>
-        </div>
-      </div>
-      <div style="overflow-x:auto"><div id="cost-detail-grid"></div></div>
-    </div>
   </div>
 
   <!-- MKT Performance rendered by JS into this container -->
@@ -802,7 +785,7 @@ body{font-family:var(--font-ui);background:var(--bg);color:var(--text);font-size
   <!-- Feedforward 360° -->
   <div class="card mb-20">
     <div class="chart-title mb-4">💬 Feedforward 360° — Quarterly Trend</div>
-    <div style="font:400 11px/1.4 var(--font-ui);color:var(--navy-60);margin-bottom:16px">Avg score theo quý (thang 1–10) · Bắt đầu từ Q2'26 · Mỗi member 1 line</div>
+    <div style="font:400 11px/1.4 var(--font-ui);color:var(--navy-60);margin-bottom:16px">Avg score theo quý (thang 0–10) · Q1'26 = ước tính · Q2'26 (May) = thực tế từ PDF</div>
     <div class="chart-card mb-16">
       <div class="chart-title">Quarterly Trend — All Members (from Q2'26)</div>
       <div style="position:relative;height:280px"><canvas id="chartFFTrend"></canvas></div>
@@ -822,7 +805,16 @@ body{font-family:var(--font-ui);background:var(--bg);color:var(--text);font-size
   <!-- Spider charts grid -->
   <div class="card">
     <div class="chart-title mb-4">🕸️ Spider Chart — Feedforward 360° by Member</div>
-    <div style="font:400 11px/1.4 var(--font-ui);color:var(--navy-60);margin-bottom:16px">6 chiều: Tư duy · Thích nghi · Giao tiếp · Hợp tác · Chủ động · Trách nhiệm</div>
+    <div style="font:400 11px/1.4 var(--font-ui);color:var(--navy-60);margin-bottom:14px">6 chiều đánh giá Q2'26 · Thang điểm 0–10 · Click vào card để xem chi tiết</div>
+    <!-- Dimension legend -->
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:18px;padding:12px 14px;background:var(--surface-2);border-radius:8px">
+      <div style="font:400 11px/1.6 var(--font-ui)"><strong>🚀 Fast Growth</strong><br><span style="color:var(--text-light)">Liên tục học hỏi, chủ động thử nghiệm AI/automation, can đảm vượt nỗi sợ & đón nhận thử thách mới.</span></div>
+      <div style="font:400 11px/1.6 var(--font-ui)"><strong>🎯 Responsibility</strong><br><span style="color:var(--text-light)">Chủ động lên kế hoạch &amp; theo sát không cần nhắc; luôn chọn mình là gốc rễ vấn đề, không đổ lỗi.</span></div>
+      <div style="font:400 11px/1.6 var(--font-ui)"><strong>💙 User-First</strong><br><span style="color:var(--text-light)">Đặt mình vào vị trí người dùng; mọi quyết định lấy người dùng làm trung tâm; dùng sản phẩm CT hàng ngày.</span></div>
+      <div style="font:400 11px/1.6 var(--font-ui)"><strong>🔒 Integrity</strong><br><span style="color:var(--text-light)">Làm đúng cam kết (đúng hạn, đúng chất lượng); nói thẳng đúng đối tượng; có sao nói vậy, không né tránh.</span></div>
+      <div style="font:400 11px/1.6 var(--font-ui)"><strong>🤝 Team</strong><br><span style="color:var(--text-light)">Làm hết sức & chủ động tìm hỗ trợ để đạt mục tiêu chung; lắng nghe và hỗ trợ đồng đội kể cả ngoài scope.</span></div>
+      <div style="font:400 11px/1.6 var(--font-ui)"><strong>⚡ Energy</strong><br><span style="color:var(--text-light)">Nhiệt huyết & năng lượng — mức độ nhiệt tình, khả năng truyền cảm hứng và tạo động lực cho cả team.</span></div>
+    </div>
     <div id="ff-spider-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px"></div>
   </div>
 </div>
@@ -1337,7 +1329,6 @@ function setBudgetTrack(t, el) {
     if (c.dataset.t === t) c.classList.add('a-' + t.toLowerCase());
     else c.style.color = {Brand:'var(--pty)',Growth:'var(--purple)',SEO:'var(--gds)',Vertical:'var(--orange)'}[c.dataset.t] || '';
   });
-  renderCostDetail();
 }
 
 function renderCostDetail() {
@@ -1559,8 +1550,20 @@ function renderBudgetPacing() {
   const d = S.data; if (!d) return;
 
   // Budget by Track — horizontal bars (filtered by vertical)
-  const filtHC = budgetVert === 'ALL' ? HC_DATA : HC_DATA.filter(r => r[2] === budgetVert || r[2] === 'ALL');
-  const trackAmts = TRACKS.map(t => filtHC.filter(r=>r[1]===t).reduce((s,r)=>s+r[4],0));
+  const hasActData = activityRows.some(r => r.months.some(m => m > 0));
+  let trackAmts;
+  if (hasActData) {
+    trackAmts = TRACKS.map(t => {
+      const rows = activityRows.filter(r =>
+        (r.objective||'') === t &&
+        (budgetVert === 'ALL' || (r.vert||'').toUpperCase() === budgetVert)
+      );
+      return rows.reduce((s, r) => s + r.months.slice(0, ACT).reduce((a, b) => a + b, 0), 0) / 1e6;
+    });
+  } else {
+    const filtHC = budgetVert === 'ALL' ? HC_DATA : HC_DATA.filter(r => r[2] === budgetVert || r[2] === 'ALL');
+    trackAmts = TRACKS.map(t => filtHC.filter(r=>r[1]===t).reduce((s,r)=>s+r[4],0));
+  }
   const totalAmt  = trackAmts.reduce((a,b)=>a+b,0);
   const barsEl = document.getElementById('budget-track-bars');
   if (barsEl) barsEl.innerHTML = TRACKS.map((t,i)=>{
@@ -1661,8 +1664,6 @@ function renderBudgetPacing() {
   // Cost table
   renderCostTable();
   // Cost detail tables
-  renderCostDetail();
-  renderCostDetailByVert();
 }
 
 // ── Unit Economics (Tab 2) ─────────────────────────────────────────────
@@ -1983,31 +1984,34 @@ const OKR_DATA = [
   {m:'Sho',     t:'Design', okr:'Creative output: ≥12 assets/tháng',                  q1:100, q2:100, s:'done'},
 ];
 
-const FF_DIMS = ['Tư duy','Thích nghi','Giao tiếp','Hợp tác','Chủ động','Trách nhiệm'];
-// Per-dimension radar scores for each member (latest quarter) — update each quarter
+// 6 dimensions from Q2'26 Feedforward PDFs
+const FF_DIMS = ['Fast Growth','Responsibility','User-First','Integrity','Team','Energy'];
+// Per-dimension scores — Q2'26 actuals from 360° PDF reports (stored as /10 = %/10)
+// Order: [Fast Growth, Responsibility, User-First, Integrity, Team, Energy]
 const FF_RADAR = {
-  Lox:   [9.0,8.5,8.8,9.0,8.5,9.0],
-  Én:    [8.0,8.2,8.5,8.3,8.0,8.2],
-  Yến:   [8.0,7.8,8.2,8.0,7.8,8.0],
-  Phát:  [9.0,8.8,8.5,8.8,9.0,9.0],
-  Sho:   [8.5,8.3,8.5,8.5,8.3,8.5],
-  Tân:   [8.0,8.0,8.2,8.0,8.0,8.0],
-  Duyên: [8.0,8.2,8.0,8.5,8.0,8.5],
-  Kiệt:  [7.8,7.6,8.0,7.8,7.5,8.0],
+  Én:   [6.7, 10.0, 9.1, 9.5, 9.4, 9.0],
+  Kiệt: [5.2,  6.4, 4.7, 9.1, 6.4, 7.9],
+  Lộc:  [6.2,  7.5, 5.0, 9.2, 6.5, 8.2],
+  Phát: [5.7,  4.2, 4.3, 8.1, 6.6, 7.6],
+  Quăn: [6.6,  8.6, 3.3, 7.1, 8.6, 8.3],
+  Sho:  [9.4,  5.8, 3.3, 9.4, 7.8, 8.3],
+  Tân:  [5.5,  7.5, 3.3, 8.9, 7.0, 7.5],
+  Yến:  [8.8,  6.9, 5.0, 8.3, 8.0, 8.5],
 };
 
-// Feedforward monthly avg score per member — Jan–May 2026
+// Feedforward avg score per member — scores: [Q1 est ×3, Apr est, Q2'26 actual avg]
+// Q1 estimates based on Q2 trend; Q2 May = confirmed score from PDF
 const FF_MONTHLY = {
   months: ['Jan','Feb','Mar','Apr','May'],
   members: [
-    {m:'Lox',   t:'Brand',  color:'#0891b2', scores:[8.3,8.5,8.7,8.8,8.8]},
-    {m:'Én',    t:'Brand',  color:'#E91E63', scores:[7.8,8.0,8.3,8.2,8.2]},
-    {m:'Yến',   t:'Brand',  color:'#f472b6', scores:[7.5,7.8,7.9,8.0,7.9]},
-    {m:'Phát',  t:'Design', color:'#2196F3', scores:[8.5,8.6,8.8,8.7,8.8]},
-    {m:'Sho',   t:'Design', color:'#0284c7', scores:[8.0,8.2,8.4,8.5,8.3]},
-    {m:'Tân',   t:'Design', color:'#0ea5e9', scores:[7.6,7.8,8.0,8.1,8.0]},
-    {m:'Duyên', t:'Growth', color:'#7C3AED', scores:[7.8,8.0,8.2,8.1,8.0]},
-    {m:'Kiệt',  t:'Growth', color:'#a78bfa', scores:[7.3,7.5,7.7,7.8,7.6]},
+    {m:'Én',   t:'Brand',  color:'#E91E63', scores:[8.7, 8.8, 8.9, null, 9.0]},
+    {m:'Kiệt', t:'Growth', color:'#a78bfa', scores:[6.3, 6.4, 6.5, null, 6.6]},
+    {m:'Lộc',  t:'Growth', color:'#0891b2', scores:[6.8, 6.9, 7.0, null, 7.1]},
+    {m:'Phát', t:'Brand',  color:'#2196F3', scores:[5.8, 5.9, 6.0, null, 6.1]},
+    {m:'Quăn', t:'Growth', color:'#f59e0b', scores:[6.8, 6.9, 7.0, null, 7.1]},
+    {m:'Sho',  t:'Design', color:'#0284c7', scores:[7.0, 7.1, 7.2, null, 7.3]},
+    {m:'Tân',  t:'Design', color:'#0ea5e9', scores:[6.3, 6.4, 6.5, null, 6.6]},
+    {m:'Yến',  t:'Brand',  color:'#f472b6', scores:[7.3, 7.4, 7.5, null, 7.6]},
   ]
 };
 
@@ -2127,7 +2131,7 @@ function renderHC() {
       options:{
         responsive:true,maintainAspectRatio:false,
         plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>` ${ctx.label}: ${ctx.raw.toFixed(1)}`}}},
-        scales:{r:{min:6,max:10,ticks:{stepSize:1,font:{size:9},backdropColor:'transparent'},
+        scales:{r:{min:0,max:10,ticks:{stepSize:2,font:{size:9},backdropColor:'transparent'},
           pointLabels:{font:{size:10,family:"'Inter',sans-serif"}},
           grid:{color:'#e5e7eb'},angleLines:{color:'#e5e7eb'}}}
       }
@@ -2327,7 +2331,7 @@ function renderMktBars(key, type) {
       plugins:{legend:{position:'bottom',labels:{font:{size:9},padding:8}},
         tooltip:{callbacks:{label:ctx=>{const act=ctx.dataset.actualData?.[ctx.dataIndex];return act!=null?` ${ctx.dataset.label}: ${fmtNum(act)} (${Math.round(ctx.raw)}%)`:` ${ctx.dataset.label}: ${Math.round(ctx.raw)}%`;}}}},
       scales:{
-        x:{beginAtZero:true,max:140,grid:{color:'#E8EDEF'},ticks:{callback:v=>v+'%',font:{size:10}}},
+        x:{beginAtZero:true,max:140,grid:{display:false},ticks:{callback:v=>v+'%',font:{size:10}}},
         y:{grid:{display:false},ticks:{font:{size:10},maxRotation:0}},
       }}}));
 }
@@ -2437,7 +2441,6 @@ function renderMKTPerf() {
     const sec=MKT_PERF[sm.key];
     const inIdxs=sec.labels.map((_,i)=>i).filter(i=>!sec.isOutput[i]);
     const outIdxs=sec.labels.map((_,i)=>i).filter(i=>sec.isOutput[i]);
-    const mkChips=(idxs,type)=>idxs.map(i=>`<span class="chip" style="font:400 10px/1 var(--font-ui);cursor:pointer" onclick="toggleMktMetric(this,'${sm.key}','${type}',${i})">${sec.labels[i]}</span>`).join('');
     html+=`
     <div style="margin:28px 0 14px"><div class="section-label">${sm.label}</div></div>
     <div class="card mb-20">
@@ -2450,12 +2453,10 @@ function renderMKTPerf() {
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
         <div>
           <div class="chart-title mb-2">Input metrics</div>
-          <div style="margin-bottom:6px;display:flex;flex-wrap:wrap;gap:4px">${mkChips(inIdxs,'input')}</div>
           <div style="position:relative"><canvas id="chartMKT_${sm.key}_input"></canvas></div>
         </div>
         <div>
           <div class="chart-title mb-2">▸ Output metrics</div>
-          <div style="margin-bottom:6px;display:flex;flex-wrap:wrap;gap:4px">${mkChips(outIdxs,'output')}</div>
           <div style="position:relative"><canvas id="chartMKT_${sm.key}_output"></canvas></div>
         </div>
       </div>
@@ -2692,8 +2693,6 @@ function saveActData() {
   }
   ['chartContractType','chartCostType','chartMonthlySpend'].forEach(k=>{if(S.charts.has(k)){S.charts.get(k).destroy();S.charts.delete(k);}});
   renderPL(); renderUE2();
-  renderCostDetail();
-  renderCostDetailByVert();
   const msg=document.getElementById('act-save-msg');
   if(msg){
     msg.textContent='✓ Đã lưu';
