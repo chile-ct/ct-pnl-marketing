@@ -611,27 +611,21 @@ body{font-family:var(--font-ui);background:var(--bg);color:var(--text);font-size
     </div>
   </div>
   <div id="sub-budget">
-    <!-- Budget by Track — full width -->
-    <div class="card mb-16">
-      <div class="kpi-label" style="margin-bottom:10px">Budget by Track (Jan–May)</div>
-      <div id="budget-track-bars"></div>
-    </div>
-    <!-- 3 equal-size pie charts -->
-    <div class="grid-3 mb-20">
-      <div class="chart-card">
-        <div class="chart-title">Working vs Non-Working</div>
-        <div style="font:400 11px/1.4 var(--font-ui);color:var(--navy-60);margin-bottom:8px">Ads &amp; content vs tools &amp; research</div>
-        <div style="position:relative;height:180px"><canvas id="chartWorkingNW"></canvas></div>
+    <!-- Budget by Track + 2 pie charts in one row -->
+    <div style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:12px;margin-bottom:16px;align-items:start">
+      <div class="card">
+        <div class="kpi-label" style="margin-bottom:10px">Budget by Track (Jan–May)</div>
+        <div id="budget-track-bars"></div>
       </div>
       <div class="chart-card">
         <div class="chart-title">By Contract Type</div>
         <div style="font:400 11px/1.4 var(--font-ui);color:var(--navy-60);margin-bottom:8px">Operation vs Consultancy</div>
-        <div style="position:relative;height:180px"><canvas id="chartContractType"></canvas></div>
+        <div style="position:relative;height:190px"><canvas id="chartContractType"></canvas></div>
       </div>
       <div class="chart-card">
         <div class="chart-title">By Cost Type</div>
-        <div style="font:400 11px/1.4 var(--font-ui);color:var(--navy-60);margin-bottom:8px">Working vs Non-working spend</div>
-        <div style="position:relative;height:180px"><canvas id="chartCostType"></canvas></div>
+        <div style="font:400 11px/1.4 var(--font-ui);color:var(--navy-60);margin-bottom:8px">Working vs Non-working</div>
+        <div style="position:relative;height:190px"><canvas id="chartCostType"></canvas></div>
       </div>
     </div>
 
@@ -1245,18 +1239,6 @@ function renderPL() {
     },elements:{line:{tension:.3},point:{radius:3}}
   }});
 
-  // Working / Non-working donut
-  const working    = HC_DATA.filter(r=>r[3]==='working').reduce((s,r)=>s+r[4],0);
-  const nonWorking = HC_DATA.filter(r=>r[3]==='non-working').reduce((s,r)=>s+r[4],0);
-  makeChart('chartWorkingNW',{type:'doughnut',data:{
-    labels:['Working','Non-working'],
-    datasets:[{data:[working,nonWorking],backgroundColor:[C.purple+'CC',C.grey+'CC'],borderWidth:0}]
-  },options:{responsive:true,maintainAspectRatio:false,cutout:'68%',plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>` ${ctx.label}: ${ctx.parsed.toFixed(0)}M₫ (${(ctx.parsed/(working+nonWorking)*100).toFixed(0)}%)`}}}}});
-  document.getElementById('working-nw-legend').innerHTML = `
-    <div style="display:flex;flex-direction:column;gap:6px;font:400 11px/1.4 var(--font-ui)">
-      <div style="display:flex;justify-content:space-between"><span style="display:flex;align-items:center;gap:6px"><span style="width:10px;height:10px;border-radius:50%;background:${C.purple+'CC'};display:inline-block"></span>Working</span><strong>${working.toFixed(1)}M (${(working/(working+nonWorking)*100).toFixed(0)}%)</strong></div>
-      <div style="display:flex;justify-content:space-between"><span style="display:flex;align-items:center;gap:6px"><span style="width:10px;height:10px;border-radius:50%;background:${C.grey+'CC'};display:inline-block"></span>Non-working</span><strong>${nonWorking.toFixed(1)}M (${(nonWorking/(working+nonWorking)*100).toFixed(0)}%)</strong></div>
-    </div>`;
 
   // MER + ROMI trends by vertical
   const trendsOpts = {responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
@@ -1338,7 +1320,7 @@ function setBudgetVert(v, el) {
     }
   });
   if (!S.data) return;
-  ['chartContractType','chartCostType','chartMonthlySpend','chartWorkingNW'].forEach(k=>{if(S.charts.has(k)){S.charts.get(k).destroy();S.charts.delete(k);}});
+  ['chartContractType','chartCostType','chartMonthlySpend'].forEach(k=>{if(S.charts.has(k)){S.charts.get(k).destroy();S.charts.delete(k);}});
   renderBudgetPacing();
 }
 
@@ -1387,7 +1369,8 @@ function renderCostDetail() {
       ${rows.map(row => {
         const clr = {PTY:'var(--pty)',JOB:'var(--job)',VEH:'var(--veh)',GDS:'var(--gds)',PARENT:'var(--purple)'}[(row.vert||'').toUpperCase()]||'var(--text)';
         const tClr = TRACK_CLR[row.team] || 'var(--text-light)';
-        const mVals = row.months.slice(0,ACT).map(v => v ? (v/1e6).toFixed(2) : '');
+        const fmtM = v => { if (!v) return ''; const m=v/1e6; return (m>=100?Math.round(m):+m.toFixed(1))+'M'; };
+        const mVals = row.months.slice(0,ACT).map(v => fmtM(v));
         const total = row.months.slice(0,ACT).reduce((s,v)=>s+v,0);
         return `<tr>
           <td style="text-align:left;font-size:11px;white-space:normal;padding-left:6px">${row.activities}</td>
@@ -1396,7 +1379,7 @@ function renderCostDetail() {
           <td style="text-align:left;font-size:11px">${row.contract}</td>
           <td style="text-align:left"><span style="padding:1px 6px;border-radius:4px;font:600 9px/1.5 var(--font-ui);background:${(row.costType||'').toLowerCase().includes('non')?'var(--navy-10)':'var(--green-bg)'};color:${(row.costType||'').toLowerCase().includes('non')?'var(--navy-60)':'#00843D'}">${row.costType}</span></td>
           ${mVals.map(v=>`<td style="color:${v?'var(--text)':'var(--text-faint)'}">${v||'—'}</td>`).join('')}
-          <td style="font-weight:700;color:var(--text)">${total ? (total/1e6).toFixed(2) : '—'}</td>
+          <td style="font-weight:700;color:var(--text)">${total ? fmtM(total) : '—'}</td>
         </tr>`;
       }).join('')}
       </tbody>
@@ -1458,26 +1441,49 @@ function renderBudgetPacing() {
 
   // Filter HC_DATA by vertical for donuts
   const hcV = budgetVert === 'ALL' ? HC_DATA : HC_DATA.filter(r => r[2] === budgetVert || r[2] === 'ALL');
-  const donutOpts = {responsive:true,maintainAspectRatio:false,cutout:'65%',plugins:{legend:{position:'bottom',labels:{font:{size:10},padding:8}}}};
+  const arcLabelPlugin = {id:'arcLabels',afterDraw(chart){
+    const {ctx}=chart, ds=chart.data.datasets[0];
+    const total=ds.data.reduce((a,b)=>a+b,0);
+    chart.getDatasetMeta(0).data.forEach((arc,i)=>{
+      const val=ds.data[i], pct=total>0?Math.round(val/total*100):0;
+      if(pct<5) return;
+      const mid=(arc.startAngle+arc.endAngle)/2, r=(arc.outerRadius+arc.innerRadius)/2;
+      ctx.save();ctx.fillStyle='#fff';ctx.font='bold 10px Inter,sans-serif';
+      ctx.textAlign='center';ctx.textBaseline='middle';
+      ctx.fillText(pct+'%',arc.x+Math.cos(mid)*r,arc.y+Math.sin(mid)*r);
+      ctx.restore();
+    });
+  }};
+  const mkDonutOpts = (colors, labels, amts) => ({
+    responsive:true,maintainAspectRatio:false,cutout:'62%',
+    plugins:{
+      legend:{position:'bottom',labels:{font:{size:9},padding:6,
+        generateLabels(chart){
+          const tot=chart.data.datasets[0].data.reduce((a,b)=>a+b,0);
+          return chart.data.labels.map((lbl,i)=>{
+            const v=chart.data.datasets[0].data[i], pct=tot>0?Math.round(v/tot*100):0;
+            return {text:`${lbl}: ${v.toFixed(0)}M (${pct}%)`,
+              fillStyle:chart.data.datasets[0].backgroundColor[i],
+              strokeStyle:'transparent',lineWidth:0,index:i};
+          });
+        }
+      }}
+    }
+  });
 
   const opAmt  = hcV.filter(r=>r[6]==='Operation').reduce((s,r)=>s+r[4],0);
   const conAmt = hcV.filter(r=>r[6]==='Consultancy').reduce((s,r)=>s+r[4],0);
   makeChart('chartContractType',{type:'doughnut',data:{
     labels:['Operation','Consultancy'],
     datasets:[{data:[opAmt||1,conAmt||1],backgroundColor:[C.veh+'CC',C.gds+'CC'],borderWidth:0}]
-  },options:donutOpts});
+  },options:mkDonutOpts(),plugins:[arcLabelPlugin]});
 
   const wAmt  = hcV.filter(r=>r[3]==='working').reduce((s,r)=>s+r[4],0);
   const nwAmt = hcV.filter(r=>r[3]==='non-working').reduce((s,r)=>s+r[4],0);
-  makeChart('chartWorkingNW',{type:'doughnut',data:{
-    labels:['Working','Non-working'],
-    datasets:[{data:[wAmt||1,nwAmt||1],backgroundColor:[C.pty+'CC',C.grey],borderWidth:0}]
-  },options:donutOpts});
-
   makeChart('chartCostType',{type:'doughnut',data:{
     labels:['Working','Non-working'],
     datasets:[{data:[wAmt||1,nwAmt||1],backgroundColor:['#6366f1CC','#e2e8f0'],borderWidth:0}]
-  },options:donutOpts});
+  },options:mkDonutOpts(),plugins:[arcLabelPlugin]});
 
   // Monthly spend chart — filtered by budgetVert
   const spendVerts = budgetVert==='ALL' ? ['PTY','JOB','VEH','GDS','PARENT'] : [budgetVert];
@@ -2043,207 +2049,191 @@ const MKT_PERF = {
   },
 };
 
+// ── MKT Performance state + helpers ──────────────────────────────────
+const mktState = {};
+function getMktVert(key) { return (mktState[key]||{}).vert||'PTY'; }
+function getMktMonth(key) { return (mktState[key]||{}).month??(ACT-1); }
+
+function setMktVert(el, key) {
+  if (!mktState[key]) mktState[key]={};
+  mktState[key].vert=el.dataset.v;
+  const VC={PTY:'var(--pty)',JOB:'var(--job)',VEH:'var(--veh)',GDS:'var(--gds)'};
+  document.querySelectorAll(`[data-vk="${key}"]`).forEach(c=>{
+    c.className='chip';
+    if(c.dataset.v===el.dataset.v) c.classList.add('a-'+el.dataset.v.toLowerCase());
+    else c.style.color=VC[c.dataset.v]||'';
+  });
+  renderMktSection(key);
+}
+function setMktMonth(el, key) {
+  if (!mktState[key]) mktState[key]={};
+  mktState[key].month=parseInt(el.dataset.mi);
+  document.querySelectorAll(`[data-mk="${key}"]`).forEach(c=>{
+    c.className='chip'; if(c.dataset.mi===el.dataset.mi) c.classList.add('active');
+  });
+  renderMktDetail(key); renderMktPivot(key);
+}
+function renderMktSection(k) { renderMktChart(k); renderMktDetail(k); renderMktPivot(k); }
+
+function fmtNum(v) {
+  if (v==null) return '—'; const n=Number(v); if(isNaN(n)) return String(v);
+  if(Math.abs(n)>=1e6) return (n/1e6).toFixed(1)+'M';
+  if(Math.abs(n)>=1e3) return (n/1e3).toFixed(1)+'k';
+  return n%1===0?String(n):n.toFixed(2);
+}
+
+function _mktGetV(vd,mi,mo) { return Array.isArray(vd.actual[mi])?(vd.actual[mi][mo]??null):(mo===ACT-1?vd.actual[mi]:null); }
+function _mktGetT(vd,mi,mo) { return Array.isArray(vd.target[mi])?(vd.target[mi][mo]??null):(mo===ACT-1?vd.target[mi]:null); }
+function _pa(a,t,hb) { return a==null||t==null||t===0?null:hb?a/t*100:(2-a/t)*100; }
+function _pbadge(p) {
+  if(p==null) return '<span style="color:var(--text-faint)">—</span>';
+  const bg=p>=100?'var(--green-bg)':p>=80?'var(--orange-bg)':'var(--red-bg)';
+  const fg=p>=100?'#00843D':p>=80?'var(--orange)':'var(--red)';
+  return `<span style="padding:1px 6px;border-radius:4px;font:700 10px/1.5 var(--font-ui);background:${bg};color:${fg}">${Math.round(p)}%</span>`;
+}
+
+function renderMktChart(key) {
+  const sec=MKT_PERF[key], vert=getMktVert(key);
+  const chartId='chartMKTLine_'+key, el=document.getElementById(chartId); if(!el) return;
+  const vd=sec.data[vert];
+  const MCLR=['#6366f1','#f59e0b','#10b981','#ef4444','#0ea5e9','#8b5cf6','#14b8a6'];
+  const datasets=sec.labels.map((label,mi)=>{
+    const isOut=sec.isOutput[mi], clr=isOut?MCLR[mi%MCLR.length]:'#9ca3af';
+    return {label:(isOut?'▸ ':'')+label,
+      data:MONTHS.slice(0,ACT).map((_,mo)=>_mktGetV(vd,mi,mo)),
+      borderColor:clr,backgroundColor:clr+'22',borderWidth:isOut?2:1.5,
+      borderDash:isOut?[]:[5,4],pointRadius:3,tension:.3,fill:false};
+  });
+  if(S.charts.has(chartId)){S.charts.get(chartId).destroy();S.charts.delete(chartId);}
+  S.charts.set(chartId,new Chart(el.getContext('2d'),{type:'line',
+    data:{labels:MONTHS.slice(0,ACT),datasets},
+    options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+      plugins:{legend:{position:'bottom',labels:{font:{size:9},padding:8,boxWidth:16}}},
+      scales:{x:{grid:{display:false},ticks:{font:{size:10}}},
+        y:{grid:{color:'#E8EDEF'},ticks:{font:{size:10},callback:v=>fmtNum(v)}}}}
+  }));
+}
+
+function renderMktDetail(key) {
+  const sec=MKT_PERF[key], vert=getMktVert(key), mo=getMktMonth(key);
+  const el=document.getElementById('detailMKT_'+key); if(!el) return;
+  const VERTS=['PTY','JOB','VEH','GDS'], VC={PTY:'var(--pty)',JOB:'var(--job)',VEH:'var(--veh)',GDS:'var(--gds)'};
+  const rows=sec.labels.map((label,mi)=>{
+    const isOut=sec.isOutput[mi], hb=(sec.higherBetter||[])[mi]!==false;
+    const cells=VERTS.map(v=>{const vd=sec.data[v],a=_mktGetV(vd,mi,mo),t=_mktGetT(vd,mi,mo),p=_pa(a,t,hb);
+      return `<td style="text-align:right;padding:4px 8px"><div style="font:600 11px/1.3 var(--font-ui)">${fmtNum(a)}</div><div style="font:400 10px/1.2 var(--font-ui);color:var(--text-faint)">${t!=null?'/ '+fmtNum(t):''}</div>${p!=null?_pbadge(p):''}</td>`;
+    }).join('');
+    return `<tr style="${isOut?'background:var(--accent-light)':''}"><td style="padding:4px 8px;font:${isOut?'600':'400'} 11px/1.4 var(--font-ui);color:${isOut?'var(--accent)':'var(--text-light)'}">${isOut?'▸ ':''}${label}</td>${cells}</tr>`;
+  }).join('');
+  el.innerHTML=`<div class="chart-title mb-4">Detail — ${MONTHS[mo]} 2026 Actual vs Target</div>
+    <div style="overflow-x:auto"><table class="dt" style="font-size:11px"><thead><tr><th>Metric</th>${VERTS.map(v=>`<th class="r" style="color:${VC[v]}">${v}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div>`;
+}
+
+function renderMktPivot(key) {
+  const sec=MKT_PERF[key], vert=getMktVert(key);
+  const el=document.getElementById('pivotMKT_'+key); if(!el) return;
+  const VC={PTY:'var(--pty)',JOB:'var(--job)',VEH:'var(--veh)',GDS:'var(--gds)'};
+  const vd=sec.data[vert];
+  const rows=sec.labels.map((label,mi)=>{
+    const isOut=sec.isOutput[mi];
+    const cells=MONTHS.slice(0,ACT).map((_,mo)=>{const a=_mktGetV(vd,mi,mo),t=_mktGetT(vd,mi,mo);
+      return `<td style="text-align:right;padding:3px 8px;font:${a!=null?'600':'400'} 10px/1.4 var(--font-ui);color:${a!=null?'var(--text)':'var(--text-faint)'}">${fmtNum(a)}${t!=null?`<br><span style="font:400 9px/1 var(--font-ui);color:var(--text-faint)">/ ${fmtNum(t)}</span>`:''}</td>`;
+    }).join('');
+    return `<tr style="${isOut?'background:var(--accent-light)':''}"><td style="padding:3px 8px;font:${isOut?'600':'400'} 10px/1.4 var(--font-ui);color:${isOut?'var(--accent)':'var(--text-light)'}">${isOut?'▸ ':''}${label}</td>${cells}</tr>`;
+  }).join('');
+  el.innerHTML=`<div style="font:400 10.5px/1.4 var(--font-ui);color:var(--navy-60);margin-bottom:6px">Vertical: <strong style="color:${VC[vert]}">${vert}</strong> · Actual / Target</div>
+    <div style="overflow-x:auto"><table class="dt" style="font-size:10px"><thead><tr><th style="text-align:left">Metric</th>${MONTHS.slice(0,ACT).map(m=>`<th class="r">${m}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div>`;
+}
+
 // ── MKT Performance rendering ─────────────────────────────────────────
 function renderMKTPerf() {
-  const container = document.getElementById('mkt-perf-container');
-  if (!container || container.dataset.rendered) return;
-  container.dataset.rendered = '1';
+  const container=document.getElementById('mkt-perf-container'); if(!container) return;
+  const VERTS=['PTY','JOB','VEH','GDS'], VC={PTY:'var(--pty)',JOB:'var(--job)',VEH:'var(--veh)',GDS:'var(--gds)'};
 
-  const VERTS=['PTY','JOB','VEH','GDS'];
-  const VCOLS={PTY:'var(--pty)',JOB:'var(--job)',VEH:'var(--veh)',GDS:'var(--gds)'};
-
-  const pctAchieve = (a, t, hb) => {
-    if (a==null||t==null||t===0) return null;
-    return hb ? a/t*100 : (2-a/t)*100;
+  // mini metric table for funnel blocks — output metrics only, May data
+  const miniTable=(key)=>{
+    const sec=MKT_PERF[key];
+    const out=sec.labels.map((l,i)=>({l,i})).filter(({i})=>sec.isOutput[i]);
+    if(!out.length) return '';
+    const rows=out.map(({l,i:mi})=>{
+      const hb=(sec.higherBetter||[])[mi]!==false;
+      const cells=VERTS.map(v=>{const vd=sec.data[v],a=_mktGetV(vd,mi,ACT-1),t=_mktGetT(vd,mi,ACT-1),p=_pa(a,t,hb);
+        if(p==null) return `<td style="text-align:center;padding:2px 3px;font:400 9px/1.5 var(--font-ui);color:var(--text-faint)">—</td>`;
+        const bg=p>=100?'var(--green-bg)':p>=80?'var(--orange-bg)':'var(--red-bg)';
+        const fg=p>=100?'#00843D':p>=80?'var(--orange)':'var(--red)';
+        return `<td style="text-align:center;padding:2px 3px"><span style="padding:1px 5px;border-radius:3px;font:700 9px/1.5 var(--font-ui);background:${bg};color:${fg}">${Math.round(p)}%</span></td>`;
+      }).join('');
+      return `<tr><td style="font:400 9px/1.4 var(--font-ui);padding:2px 6px 2px 0;white-space:nowrap;color:inherit">${l}</td>${cells}</tr>`;
+    }).join('');
+    return `<div style="margin-top:10px;overflow-x:auto"><table style="border-collapse:collapse;font-size:9px;width:100%"><thead><tr>
+      <th style="text-align:left;font:600 9px/1 var(--font-ui);padding:2px 6px 2px 0;opacity:.7">Output metric</th>
+      ${VERTS.map(v=>`<th style="text-align:center;font:700 9px/1 var(--font-ui);color:${VC[v]};padding:2px 4px">${v}</th>`).join('')}
+    </tr></thead><tbody>${rows}</tbody></table></div>`;
   };
-  const pctBadge = p => {
-    if (p==null) return '<span style="color:var(--text-faint)">—</span>';
-    const bg=p>=100?'var(--green-bg)':p>=80?'var(--orange-bg)':'var(--red-bg)';
-    const fg=p>=100?'var(--green)':p>=80?'var(--orange)':'var(--red)';
-    return `<span style="padding:1px 6px;border-radius:4px;font:700 10px/1.5 var(--font-ui);background:${bg};color:${fg}">${Math.round(p)}%</span>`;
-  };
 
-  // Overall summary
   const sects=[
-    {key:'branding',label:'🎨 Branding',color:C.pty},
-    {key:'digital_demand',label:'📣 Digital Demand',color:C.veh},
-    {key:'app_growth',label:'📱 App Growth',color:C.purple},
+    {key:'branding',label:'🎨 Branding'},
+    {key:'digital_demand',label:'📣 Digital Demand'},
+    {key:'app_growth',label:'📱 App Growth'},
   ];
-  const avgOut = (key,vert) => {
-    const s=MKT_PERF[key],vd=s.data[vert];
-    const vals=s.labels.map((_,i)=>s.isOutput[i]?pctAchieve(vd.actual[i],vd.target[i],s.higherBetter[i]):null).filter(v=>v!=null);
-    return vals.length?vals.reduce((a,b)=>a+b,0)/vals.length:null;
-  };
 
-  // Helper: vertical badge with score
-  const vertBadge = (key, v) => {
-    const p = avgOut(key, v);
-    if (p == null) return `<div style="font:400 10px/1.4 var(--font-ui);color:var(--text-faint)">—</div>`;
-    const bg=p>=100?'var(--green-bg)':p>=80?'var(--orange-bg)':'var(--red-bg)';
-    const fg=p>=100?'var(--green)':p>=80?'var(--orange)':'var(--red)';
-    const VCOLS2={PTY:'var(--pty)',JOB:'var(--job)',VEH:'var(--veh)',GDS:'var(--gds)'};
-    return `<div style="text-align:center">
-      <div style="font:600 9px/1 var(--font-ui);color:${VCOLS2[v]};margin-bottom:3px">${v}</div>
-      <div style="padding:3px 8px;border-radius:6px;font:700 12px/1.4 var(--font-ui);background:${bg};color:${fg};display:inline-block">${Math.round(p)}%</div>
-    </div>`;
-  };
-
-  let html = `
+  let html=`
   <div style="margin-bottom:16px"><div class="section-label">📊 Overall Achievement — May 2026</div></div>
   <div class="card mb-24">
-    <div style="font:400 11px/1.4 var(--font-ui);color:var(--navy-60);margin-bottom:20px">Avg output metric achievement · May 2026 · % vs target</div>
-    <!-- Funnel: Branding (top) → Digital Demand + App Growth (bottom) -->
-    <div style="max-width:720px;margin:0 auto">
-      <!-- Top of funnel: Branding -->
-      <div style="background:var(--pty-bg);border:1.5px solid var(--pty);border-radius:10px;padding:14px 20px;position:relative">
-        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
-          <div>
-            <div style="font:700 13px/1 var(--font-ui);color:var(--pty);margin-bottom:4px">🎨 Branding</div>
-            <div style="font:400 10.5px/1.4 var(--font-ui);color:var(--text-light)">Brand reach · Brand kw · Content · Social followers</div>
-          </div>
-          <div style="display:flex;gap:12px;flex-wrap:wrap">
-            ${VERTS.map(v=>vertBadge('branding',v)).join('')}
-          </div>
-        </div>
+    <div style="font:400 11px/1.4 var(--font-ui);color:var(--navy-60);margin-bottom:20px">Output metric achievement % vs target · May 2026</div>
+    <div style="max-width:760px;margin:0 auto">
+      <div style="background:var(--pty-bg);border:2.5px solid var(--pty);border-radius:10px;padding:14px 20px">
+        <div style="font:700 13px/1 var(--font-ui);color:var(--pty);margin-bottom:2px">🎨 Branding</div>
+        <div style="font:400 10px/1.4 var(--font-ui);color:var(--text-light)">Brand reach · Brand keywords · Content · Social followers</div>
+        ${miniTable('branding')}
       </div>
-      <!-- Connector -->
-      <div style="display:flex;justify-content:center;height:24px">
-        <div style="display:flex;gap:200px;align-items:flex-end;height:100%">
-          <div style="width:1px;height:24px;background:var(--border)"></div>
-          <div style="width:1px;height:24px;background:var(--border)"></div>
-        </div>
+      <div style="position:relative;height:36px;margin:0 80px">
+        <div style="position:absolute;top:0;left:0;right:0;height:3px;background:var(--pty)"></div>
+        <div style="position:absolute;top:0;left:0;width:3px;height:100%;background:var(--pty);border-radius:0 0 2px 2px"></div>
+        <div style="position:absolute;top:0;right:0;width:3px;height:100%;background:var(--pty);border-radius:0 0 2px 2px"></div>
       </div>
-      <!-- Horizontal bar connecting two branches -->
-      <div style="position:relative;height:16px;margin:0 100px">
-        <div style="position:absolute;top:50%;left:0;right:0;height:1px;background:var(--border)"></div>
-        <div style="position:absolute;top:0;left:0;height:100%;width:1px;background:var(--border)"></div>
-        <div style="position:absolute;top:0;right:0;height:100%;width:1px;background:var(--border)"></div>
-      </div>
-      <!-- Bottom: two branches -->
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
-        <!-- Digital Demand -->
-        <div style="background:var(--veh-bg);border:1.5px solid var(--veh);border-radius:10px;padding:14px 20px">
-          <div style="font:700 13px/1 var(--font-ui);color:var(--veh);margin-bottom:4px">📣 Digital Demand</div>
-          <div style="font:400 10.5px/1.4 var(--font-ui);color:var(--text-light);margin-bottom:12px">DAU · DwL · Lead · Cost per unit</div>
-          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px">
-            ${VERTS.map(v=>vertBadge('digital_demand',v)).join('')}
-          </div>
+        <div style="background:var(--veh-bg);border:2.5px solid var(--veh);border-radius:10px;padding:14px 20px">
+          <div style="font:700 13px/1 var(--font-ui);color:var(--veh);margin-bottom:2px">📣 Digital Demand</div>
+          <div style="font:400 10px/1.4 var(--font-ui);color:var(--text-light)">DAU · DwL · Lead · Cost per unit</div>
+          ${miniTable('digital_demand')}
         </div>
-        <!-- App Growth -->
-        <div style="background:var(--purple-bg);border:1.5px solid var(--purple);border-radius:10px;padding:14px 20px">
-          <div style="font:700 13px/1 var(--font-ui);color:var(--purple);margin-bottom:4px">📱 App Growth</div>
-          <div style="font:400 10.5px/1.4 var(--font-ui);color:var(--text-light);margin-bottom:12px">App installs · Activated users · D1 RR</div>
-          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px">
-            ${VERTS.map(v=>vertBadge('app_growth',v)).join('')}
-          </div>
+        <div style="background:var(--purple-bg);border:2.5px solid var(--purple);border-radius:10px;padding:14px 20px">
+          <div style="font:700 13px/1 var(--font-ui);color:var(--purple);margin-bottom:2px">📱 App Growth</div>
+          <div style="font:400 10px/1.4 var(--font-ui);color:var(--text-light)">App installs · Activated users · D1 RR</div>
+          ${miniTable('app_growth')}
         </div>
       </div>
     </div>
   </div>`;
 
-  const fmtActual = v => {
-    if (v==null) return '—';
-    if (v>=1e6) return (v/1e6).toFixed(1)+'M';
-    if (v>=1e3) return (v/1e3).toFixed(1)+'k';
-    return String(v);
-  };
-
-  // Per-section detail — per-vertical cards with bar charts
-  sects.forEach(sm => {
-    const sec = MKT_PERF[sm.key];
-
-    html += `
-    <div style="margin:28px 0 14px"><div class="section-label">${sm.label}</div></div>`;
-
-    // Chart: ALL metrics achievement by vertical (horizontal bar)
-    const allIdxs = sec.labels.map((_,i)=>i);
-    const chartId = 'chartMKTPerf_'+sm.key;
-    const chartH = Math.max(200, sec.labels.length * 44 + 60); // 44px per metric + legend
-    html += `
-    <div class="grid-2 mb-16" style="align-items:start">
-      <div class="chart-card">
-        <div class="chart-title mb-4">Output Achievement — May 2026</div>
-        <div style="font:400 11px/1.4 var(--font-ui);color:var(--navy-60);margin-bottom:8px">% vs target · ▸ = output · others = input metrics</div>
-        <div style="position:relative;height:${chartH}px"><canvas id="${chartId}"></canvas></div>
+  sects.forEach(sm=>{
+    const chartId='chartMKTLine_'+sm.key;
+    html+=`
+    <div style="margin:28px 0 14px"><div class="section-label">${sm.label}</div></div>
+    <div class="card mb-20">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+        <span style="font:600 11px/1 var(--font-ui);color:var(--navy-60)">Vertical:</span>
+        <div class="chip-group" id="vertChip_${sm.key}">
+          ${VERTS.map((v,vi)=>`<div class="chip${vi===0?' a-'+v.toLowerCase():''}" data-vk="${sm.key}" data-v="${v}" onclick="setMktVert(this,'${sm.key}')" style="color:${VC[v]}">${v}</div>`).join('')}
+        </div>
       </div>
-      <div class="chart-card" style="overflow-x:auto">
-        <div class="chart-title mb-4">Detail — May 2026 Actual vs Target</div>
-        <div style="font:400 11px/1.4 var(--font-ui);color:var(--navy-60);margin-bottom:8px">▸ Output metrics (blue bg) · Input metrics (grey)</div>
-        <table class="dt" style="font-size:11px">
-          <thead><tr>
-            <th>Metric</th>
-            <th class="r" style="color:var(--pty)">PTY</th>
-            <th class="r" style="color:var(--job)">JOB</th>
-            <th class="r" style="color:var(--veh)">VEH</th>
-            <th class="r" style="color:var(--gds)">GDS</th>
-          </tr></thead>
-          <tbody>
-            ${sec.labels.map((label,mi)=>{
-              const isOut=sec.isOutput[mi], hb=sec.higherBetter[mi];
-              const cells=VERTS.map(v=>{
-                const vd=sec.data[v],a=vd.actual[mi],t=vd.target[mi];
-                const p=pctAchieve(a,t,hb);
-                return `<td style="text-align:right;padding:4px 8px">
-                  <div style="font:600 11px/1.3 var(--font-ui);color:var(--text)">${fmtActual(a)}</div>
-                  <div style="font:400 10px/1.2 var(--font-ui);color:var(--text-faint)">${t!=null?'/ '+fmtActual(t):''}</div>
-                  ${p!=null?pctBadge(p):''}
-                </td>`;
-              }).join('');
-              return `<tr style="${isOut?'background:var(--accent-light)':''}">
-                <td style="padding:4px 8px;font:${isOut?'600':'400'} 11px/1.4 var(--font-ui);color:${isOut?'var(--accent)':'var(--text-light)'}">${isOut?'▸ ':''}${label}</td>
-                ${cells}
-              </tr>`;
-            }).join('')}
-          </tbody>
-        </table>
+      <div class="chart-title mb-2">${sm.label.replace(/^[^ ]+ /,'')} — Monthly Trend</div>
+      <div style="font:400 11px/1.4 var(--font-ui);color:var(--navy-60);margin-bottom:10px">Solid lines = output metrics · Dashed = input metrics · Jan–May 2026</div>
+      <div style="position:relative;height:240px;margin-bottom:20px"><canvas id="${chartId}"></canvas></div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+        <span style="font:600 11px/1 var(--font-ui);color:var(--navy-60)">Tháng:</span>
+        <div class="chip-group" id="monthChip_${sm.key}">
+          ${MONTHS.slice(0,ACT).map((m,i)=>`<div class="chip${i===ACT-1?' active':''}" data-mk="${sm.key}" data-mi="${i}" onclick="setMktMonth(this,'${sm.key}')">${m}</div>`).join('')}
+        </div>
       </div>
+      <div id="detailMKT_${sm.key}"></div>
+      <div style="margin-top:20px"><div class="chart-title mb-6">Monthly Data — All Metrics × Months</div><div id="pivotMKT_${sm.key}"></div></div>
     </div>`;
   });
 
-  html += `<div style="margin-top:8px;padding:10px 14px;background:var(--navy-10);border-radius:8px;border-left:3px solid var(--navy-40);font:400 11px/1.5 var(--font-ui);color:var(--navy-60)">
-    📌 Data tháng 5/2026. Monthly trend sẽ bổ sung sau khi có full Jan–Apr data.
-  </div>`;
-
-  container.innerHTML = html;
-
-  // Render achievement bar charts for each section — all metrics
-  sects.forEach(sm => {
-    const sec = MKT_PERF[sm.key];
-    const chartId = 'chartMKTPerf_'+sm.key;
-    if (!document.getElementById(chartId)) return;
-    const allIdxs = sec.labels.map((_,i)=>i);
-    // Label: prefix output metrics with ▸
-    const labels = allIdxs.map(i=>(sec.isOutput[i]?'▸ ':'')+sec.labels[i]);
-    const colors = [C.pty, C.job, C.veh, C.gds];
-    const datasets = VERTS.map((v,vi)=>({
-      label: v,
-      data: allIdxs.map(i=>{
-        const vd=sec.data[v], a=vd.actual[i], t=vd.target[i], hb=sec.higherBetter[i];
-        return pctAchieve(a,t,hb);
-      }),
-      backgroundColor: allIdxs.map(i=>sec.isOutput[i] ? colors[vi]+'cc' : colors[vi]+'44'),
-      borderColor: colors[vi],
-      borderWidth: 1,
-      borderRadius: 3,
-    }));
-    const chart = new Chart(document.getElementById(chartId).getContext('2d'),{
-      type:'bar',
-      data:{labels,datasets},
-      options:{
-        indexAxis:'y',
-        responsive:true,maintainAspectRatio:false,
-        plugins:{
-          legend:{position:'bottom'},
-          tooltip:{callbacks:{label:ctx=>ctx.raw!=null?` ${ctx.dataset.label}: ${Math.round(ctx.raw)}%`:' —'}}
-        },
-        scales:{
-          x:{beginAtZero:true,max:130,grid:{color:'#E8EDEF'},ticks:{callback:v=>v+'%',font:{size:10}}},
-          y:{grid:{display:false},ticks:{font:{size:10},maxRotation:0}}
-        }
-      }
-    });
-    S.charts.set(chartId, chart);
-  });
+  container.innerHTML=html;
+  sects.forEach(sm=>renderMktSection(sm.key));
 }
 
 // ── Data Input Tab (Tab 5) ────────────────────────────────────────────
@@ -2343,7 +2333,7 @@ function saveCostData() {
   COST_VERTS.forEach(v => { S.data.spend[v] = editCost[v].map(n => n/1e9); });
   renderPL(); renderUE2();
   // Invalidate budget charts so they re-render on next tab-3 visit
-  ['chartContractType','chartCostType','chartMonthlySpend','chartWorkingNW'].forEach(k=>{if(S.charts.has(k)){S.charts.get(k).destroy();S.charts.delete(k);}});
+  ['chartContractType','chartCostType','chartMonthlySpend'].forEach(k=>{if(S.charts.has(k)){S.charts.get(k).destroy();S.charts.delete(k);}});
   const msg = document.getElementById('cost-save-msg');
   msg.textContent = '✓ Đã lưu & cập nhật chart';
   setTimeout(()=>msg.textContent='', 3000);
@@ -2456,6 +2446,7 @@ function syncActFromDOM() {
 
 function saveActData() {
   syncActFromDOM();
+  try { localStorage.setItem('ct_act_rows', JSON.stringify(activityRows)); } catch(e){}
   if (S.data) {
     const ns={PTY:Array(12).fill(0),JOB:Array(12).fill(0),VEH:Array(12).fill(0),GDS:Array(12).fill(0),PARENT:Array(12).fill(0)};
     activityRows.forEach(row=>{
@@ -2467,12 +2458,16 @@ function saveActData() {
     editCost=null; initEditCost();
     if (document.getElementById('cost-tbody')) renderCostTable();
   }
-  ['chartContractType','chartCostType','chartMonthlySpend','chartWorkingNW'].forEach(k=>{if(S.charts.has(k)){S.charts.get(k).destroy();S.charts.delete(k);}});
+  ['chartContractType','chartCostType','chartMonthlySpend'].forEach(k=>{if(S.charts.has(k)){S.charts.get(k).destroy();S.charts.delete(k);}});
   renderPL(); renderUE2();
   renderCostDetail();
-  showToast('✓ Đã lưu & cập nhật tất cả charts');
   const msg=document.getElementById('act-save-msg');
-  if(msg){msg.textContent='';} // clear inline msg — toast handles it
+  if(msg){
+    msg.textContent='✓ Đã lưu';
+    msg.style.cssText='display:inline-flex;align-items:center;gap:4px;padding:4px 12px;background:var(--green);color:#fff;border-radius:6px;font:600 12px/1 var(--font-ui);margin-left:8px;animation:fadeIn .2s ease';
+    clearTimeout(msg._t);
+    msg._t=setTimeout(()=>{msg.textContent='';msg.style.cssText='';},2800);
+  }
 }
 
 function resetActData() {
@@ -2487,7 +2482,15 @@ function renderDataInput() {
 }
 
 // ── Init ──────────────────────────────────────────────────────────────
-document.addEventListener('DOMContentLoaded', loadData);
+function loadSavedActRows() {
+  try {
+    const saved = localStorage.getItem('ct_act_rows');
+    if (!saved) return;
+    const parsed = JSON.parse(saved);
+    if (Array.isArray(parsed) && parsed.length > 0) { activityRows = parsed; }
+  } catch(e) {}
+}
+document.addEventListener('DOMContentLoaded', () => { loadSavedActRows(); loadData(); });
 </script>
 </body>
 </html>
