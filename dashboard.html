@@ -91,11 +91,11 @@ body{font-family:var(--font-ui);background:var(--bg);color:var(--text);font-size
 .chip-group{display:flex;gap:4px;align-items:center}
 .chip{display:inline-flex;align-items:center;padding:4px 12px;border-radius:20px;font:500 12px/1.4 var(--font-ui);cursor:pointer;border:1px solid var(--border);color:var(--text-light);background:var(--surface);transition:all .12s;user-select:none}
 .chip:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-light)}
-.chip.a-all{background:var(--navy);border-color:var(--navy);color:#fff}
-.chip.a-pty{background:var(--pty);border-color:var(--pty);color:#fff}
-.chip.a-job{background:var(--job);border-color:var(--job);color:#fff}
-.chip.a-veh{background:var(--veh);border-color:var(--veh);color:#fff}
-.chip.a-gds{background:var(--gds);border-color:var(--gds);color:#fff}
+.chip.a-all{background:var(--navy);border-color:var(--navy);color:#fff;font-weight:700}
+.chip.a-pty{background:var(--pty-bg);border-color:var(--pty);color:var(--pty);font-weight:700}
+.chip.a-job{background:var(--job-bg);border-color:var(--job);color:var(--job);font-weight:700}
+.chip.a-veh{background:var(--veh-bg);border-color:var(--veh);color:var(--veh);font-weight:700}
+.chip.a-gds{background:var(--gds-bg);border-color:var(--gds);color:var(--gds);font-weight:700}
 
 /* ── Sub-tabs ───────────────────────────────────── */
 .sub-tabs{display:flex;border-bottom:1px solid var(--border);margin-bottom:22px;gap:0;overflow-x:auto}
@@ -434,19 +434,11 @@ body{font-family:var(--font-ui);background:var(--bg);color:var(--text);font-size
       </div>
     </div>
 
-    <!-- Main combo chart + Working/NW donut -->
-    <div class="grid-2 mb-20" style="grid-template-columns:2fr 1fr">
-      <div class="chart-card">
-        <div class="chart-title">Revenue vs MKT Spend — Jan–Dec</div>
-        <div style="font:400 11px/1.4 var(--font-ui);color:var(--navy-60);margin-bottom:10px">All verticals · solid = actual · faded = forecast · line = % MKT Spend / Revenue</div>
-        <div style="position:relative;height:300px"><canvas id="chartRevSpendCombo"></canvas></div>
-      </div>
-      <div class="chart-card">
-        <div class="chart-title">Working vs Non-Working Budget</div>
-        <div style="font:400 11px/1.4 var(--font-ui);color:var(--navy-60);margin-bottom:10px">Working = ads &amp; content; Non-working = tools &amp; research</div>
-        <div style="position:relative;height:200px"><canvas id="chartWorkingNW"></canvas></div>
-        <div id="working-nw-legend" style="margin-top:12px"></div>
-      </div>
+    <!-- Main combo chart -->
+    <div class="chart-card mb-20">
+      <div class="chart-title">Revenue vs MKT Spend — Jan–Dec</div>
+      <div style="font:400 11px/1.4 var(--font-ui);color:var(--navy-60);margin-bottom:10px">All verticals · solid = actual · faded = forecast · line = % MKT Spend / Revenue</div>
+      <div style="position:relative;height:300px"><canvas id="chartRevSpendCombo"></canvas></div>
     </div>
 
     <!-- MER + ROMI trend -->
@@ -472,43 +464,6 @@ body{font-family:var(--font-ui);background:var(--bg);color:var(--text);font-size
     </div>
   </div>
 
-  <!-- ── SECTION 2: Budget Pacing ─────────────────── -->
-  <div style="margin:32px 0 16px"><div class="section-label">📊 Budget Pacing</div></div>
-  <div id="sub-budget">
-    <div class="grid-3 mb-20" style="grid-template-columns:2fr 1fr 1fr">
-      <!-- By Track -->
-      <div class="card">
-        <div class="kpi-label mb-16">Budget by Track (Jan–May)</div>
-        <div style="font:400 11px/1.4 var(--font-ui);color:var(--navy-60);margin-bottom:14px">Jan–May cumulative — all verticals</div>
-        <div id="budget-track-bars"></div>
-      </div>
-      <!-- Contract type -->
-      <div class="chart-card">
-        <div class="chart-title">By Contract Type</div>
-        <div style="font:400 11px/1.4 var(--font-ui);color:var(--navy-60);margin-bottom:8px">Col E in FC sheet</div>
-        <div style="position:relative;height:160px"><canvas id="chartContractType"></canvas></div>
-      </div>
-      <!-- Cost type -->
-      <div class="chart-card">
-        <div class="chart-title">By Cost Type</div>
-        <div style="font:400 11px/1.4 var(--font-ui);color:var(--navy-60);margin-bottom:8px">Col F in FC sheet</div>
-        <div style="position:relative;height:160px"><canvas id="chartCostType"></canvas></div>
-      </div>
-    </div>
-
-    <!-- Monthly spend chart -->
-    <div class="chart-card mb-20">
-      <div class="chart-title">Monthly Spend — Actual vs Forecast</div>
-      <div style="font:400 11px/1.4 var(--font-ui);color:var(--navy-60);margin-bottom:10px">Solid = actual spend (Jan–May) · Faded = forecast (Jun–Dec) · single bar per month · B đ</div>
-      <div style="position:relative;height:260px"><canvas id="chartMonthlySpend"></canvas></div>
-    </div>
-
-    <!-- Cost detail by track -->
-    <div class="card">
-      <div class="chart-title mb-16">Cost Detail by Track — from FC &amp; Actual Cost Sheet</div>
-      <div id="cost-detail-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:16px"></div>
-    </div>
-  </div>
 
   <!-- ── SECTION 3: Unit Economics ────────────────── -->
   <div style="margin:32px 0 16px"><div class="section-label">💡 Unit Economics</div></div>
@@ -627,6 +582,51 @@ body{font-family:var(--font-ui);background:var(--bg);color:var(--text);font-size
   <div class="sec-hdr mb-20">
     <div class="sec-icon">📊</div>
     <div><h2>MKT Performance</h2><p>Overall · Branding · Digital Demand · App Growth</p></div>
+  </div>
+
+  <!-- Budget Pacing + Working vs NW -->
+  <div style="margin-bottom:16px"><div class="section-label">📊 Budget Pacing</div></div>
+  <div id="sub-budget">
+    <div class="grid-3 mb-20" style="grid-template-columns:2fr 1fr 1fr 1fr">
+      <!-- By Track -->
+      <div class="card">
+        <div class="kpi-label mb-16">Budget by Track (Jan–May)</div>
+        <div style="font:400 11px/1.4 var(--font-ui);color:var(--navy-60);margin-bottom:14px">Jan–May cumulative — all verticals</div>
+        <div id="budget-track-bars"></div>
+      </div>
+      <!-- Working vs Non-Working -->
+      <div class="chart-card">
+        <div class="chart-title">Working vs Non-Working</div>
+        <div style="font:400 11px/1.4 var(--font-ui);color:var(--navy-60);margin-bottom:8px">Ads &amp; content vs tools &amp; research</div>
+        <div style="position:relative;height:160px"><canvas id="chartWorkingNW"></canvas></div>
+        <div id="working-nw-legend" style="margin-top:8px"></div>
+      </div>
+      <!-- Contract type -->
+      <div class="chart-card">
+        <div class="chart-title">By Contract Type</div>
+        <div style="font:400 11px/1.4 var(--font-ui);color:var(--navy-60);margin-bottom:8px">Col E in FC sheet</div>
+        <div style="position:relative;height:160px"><canvas id="chartContractType"></canvas></div>
+      </div>
+      <!-- Cost type -->
+      <div class="chart-card">
+        <div class="chart-title">By Cost Type</div>
+        <div style="font:400 11px/1.4 var(--font-ui);color:var(--navy-60);margin-bottom:8px">Col F in FC sheet</div>
+        <div style="position:relative;height:160px"><canvas id="chartCostType"></canvas></div>
+      </div>
+    </div>
+
+    <!-- Monthly spend chart -->
+    <div class="chart-card mb-20">
+      <div class="chart-title">Monthly Spend — Actual vs Forecast</div>
+      <div style="font:400 11px/1.4 var(--font-ui);color:var(--navy-60);margin-bottom:10px">Solid = actual spend (Jan–May) · Faded = forecast (Jun–Dec) · single bar per month · B đ</div>
+      <div style="position:relative;height:260px"><canvas id="chartMonthlySpend"></canvas></div>
+    </div>
+
+    <!-- Cost detail by track -->
+    <div class="card mb-24">
+      <div class="chart-title mb-16">Cost Detail by Track — from FC &amp; Actual Cost Sheet</div>
+      <div id="cost-detail-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:16px"></div>
+    </div>
   </div>
 
   <!-- MKT Performance rendered by JS into this container -->
@@ -794,8 +794,8 @@ body{font-family:var(--font-ui);background:var(--bg);color:var(--text);font-size
 
   <!-- PART 1: MKT Cost -->
   <div style="margin:0 0 14px">
-    <div class="section-label">💸 MKT Cost — Actual Spend (B VND)</div>
-    <div class="paste-tip">💡 Click vào ô bất kỳ, rồi <kbd>⌘V</kbd> để paste range từ Google Sheets (copy đúng vùng dữ liệu, ko gồm header). Sau khi paste, bấm <strong>Lưu → cập nhật chart</strong>.</div>
+    <div class="section-label">💸 MKT Cost — Actual Spend (VND)</div>
+    <div class="paste-tip">🔄 Bảng này tự động tính từ bảng <strong>Cost Detail by Activity</strong> bên dưới. Paste data vào bảng Activity → Lưu là bảng này tự cập nhật.</div>
     <div style="overflow-x:auto;border-radius:10px;border:1px solid var(--border);background:var(--surface)">
       <table class="itable" id="cost-table" style="min-width:800px">
         <thead>
@@ -810,11 +810,7 @@ body{font-family:var(--font-ui);background:var(--bg);color:var(--text);font-size
         <tbody id="cost-tbody"></tbody>
       </table>
     </div>
-    <div style="display:flex;gap:10px;margin-top:10px;align-items:center">
-      <button onclick="saveCostData()" style="background:var(--accent);color:#fff;border:none;border-radius:7px;padding:7px 18px;font:600 12px/1 var(--font-ui);cursor:pointer">💾 Lưu → cập nhật chart</button>
-      <button onclick="resetCostData()" style="background:var(--surface);color:var(--text-light);border:1px solid var(--border);border-radius:7px;padding:7px 14px;font:500 12px/1 var(--font-ui);cursor:pointer">↺ Reset về data gốc</button>
-      <span id="cost-save-msg" style="font:400 11.5px/1 var(--font-ui);color:var(--green)"></span>
-    </div>
+    <span id="cost-save-msg" style="font:400 11.5px/1 var(--font-ui);color:var(--green);display:block;margin-top:6px"></span>
   </div>
 
   <!-- PART 2: Activity Cost Detail -->
@@ -944,8 +940,8 @@ function switchTab(n) {
   document.querySelectorAll('.hdr-tab').forEach(t => t.classList.remove('active'));
   document.getElementById('tab-'+n).classList.add('active');
   document.querySelectorAll('.hdr-tab')[n-1].classList.add('active');
-  if (n===2 && S.data) { renderPL(); renderBudgetPacing(); renderUE2(); renderCohort(); }
-  if (n===3 && S.data) renderMKTPerf();
+  if (n===2 && S.data) { renderPL(); renderUE2(); renderCohort(); }
+  if (n===3 && S.data) { renderBudgetPacing(); renderMKTPerf(); }
   if (n===4) renderHC();
   if (n===5) renderDataInput();
 }
@@ -1087,8 +1083,7 @@ function setPLVert(v, el) {
   cohortVert = v==='ALL' ? 'ALL' : v;
   document.querySelectorAll('#cohort-vert-filter .chip').forEach(c=>{c.className='chip';if(c.dataset.v===cohortVert)c.classList.add('a-'+cohortVert.toLowerCase());});
   renderCohort();
-  ['chartContractType','chartCostType','chartMonthlySpend'].forEach(k=>{if(S.charts.has(k)){S.charts.get(k).destroy();S.charts.delete(k);}});
-  renderBudgetPacing();
+  // Budget Pacing is on MKT Performance tab now — no re-render needed here
 }
 
 function getRevArr() {
@@ -1229,7 +1224,9 @@ function renderPL() {
     scales:{x:{grid:{display:false}},y:{beginAtZero:true,grid:{color:'#E8EDEF'},ticks:{font:{size:11,family:"'Inter',-apple-system,sans-serif"}}}}};
   const merDatasets = [
     {label:'All',data:months.map((_,i)=>totalSpendM(i)>0?totalRevM(i)/totalSpendM(i):null),borderColor:C.all,pointRadius:3,borderWidth:2,tension:.3},
-    ...VERTS4.map((v,vi)=>({label:v,data:months.map((_,i)=>{const s=d.spend[v]?.[i]||0;return s>0?(d.revenue[v]?.[i]||0)/s:null;}),
+    ...VERTS4.map((v,vi)=>({label:v,data:months.map((_,i)=>{
+      if (v==='VEH'&&i===0) return null; // VEH Jan excluded (no data)
+      const s=d.spend[v]?.[i]||0;return s>0?(d.revenue[v]?.[i]||0)/s:null;}),
       borderColor:COLORS4[vi],pointRadius:3,borderWidth:2,tension:.3}))
   ];
   makeChart('chartMERTrend',{type:'line',data:{labels:months,datasets:merDatasets},options:trendsOpts});
@@ -1394,7 +1391,7 @@ function renderUE2() {
   document.getElementById('kpi-lpu').textContent   = lpu[li]!=null  ? lpu[li].toFixed(4)    : '—';
   document.getElementById('kpi-ltv2').textContent  = fVND(ltv[li]);
   document.getElementById('kpi-cac2').textContent  = fVND(cac[li]);
-  const lvc = ltvcac[li];
+  const lvc = overallLvc[li];
   document.getElementById('kpi-ltvcac2').textContent = lvc!=null ? f2(lvc)+'×' : '—';
   document.getElementById('kpi-ltvcac2').style.color = lvc!=null&&lvc>=3 ? '#00843D' : C.red;
   document.getElementById('kpi-ltvcac-flag').textContent = lvc!=null ? (lvc>=3 ? '✓ Above 3.0×' : '△ Below 3.0×') : '—';
@@ -1409,10 +1406,10 @@ function renderUE2() {
   document.getElementById('ue-ltv-mom').innerHTML    = momLbl(ltv.map(v=>v||0));
   document.getElementById('ue-cac-mom').innerHTML    = momLbl(cac.map(v=>v||0));
 
-  const multiLine = (arr5) => ({
+  const multiLine = () => ({
     responsive:true,maintainAspectRatio:false,
     interaction:{mode:'index',intersect:false},
-    plugins:{legend:{position:'bottom',labels:{usePointStyle:true,pointStyleWidth:8,padding:10}}},
+    plugins:{legend:{position:'bottom'}},
     scales:{x:{grid:{display:false}},y:{beginAtZero:true,grid:{color:'#E8EDEF'},ticks:{font:{size:11,family:"'Inter',-apple-system,sans-serif"}}}}
   });
 
@@ -1435,8 +1432,17 @@ function renderUE2() {
     return {vpl:vplV,ltv:ltvV,cac:cacV,lvc:lvcV};
   }
 
+  // For 'Overall' LTV/CAC: spend-weighted average of per-vertical values
+  // (avoids denominator mismatch between vMAU-sum and new_app_mau-total)
+  const vertLinesAll = VERTS4.map(v => vertLine(v));
+  const overallLvc = months.map((_,i) => {
+    const vals = VERTS4.map((_,vi) => ({lvc:vertLinesAll[vi].lvc[i], spend:d.spend[VERTS4[vi]]?.[i]||0})).filter(x=>x.lvc!=null&&x.spend>0);
+    if (!vals.length) return null;
+    const totalSpend = vals.reduce((s,x)=>s+x.spend,0);
+    return vals.reduce((s,x)=>s+x.lvc*(x.spend/totalSpend),0);
+  });
   const overall = {
-    lvc:ltvcac, vpl, ltv, cac
+    lvc:overallLvc, vpl, ltv, cac
   };
 
   function buildDatasets(key, includeOverall=true) {
@@ -1777,17 +1783,32 @@ function renderHC() {
     </tr>`;
   }).join('');
 
-  // Inline spider charts — 3 per row
+  // Inline spider charts — 3 per row, with avg score + QoQ overlay
   const grid = document.getElementById('ff-spider-grid');
   if (!grid) return;
-  grid.innerHTML = FF_MONTHLY.members.map(m=>`
+  grid.innerHTML = FF_MONTHLY.members.map(m=>{
+    const data = FF_RADAR[m.m] || [];
+    const avg = data.length ? (data.reduce((a,b)=>a+b,0)/data.length) : null;
+    const q1avg = (m.scores.slice(0,3).reduce((a,b)=>a+b,0)/3);
+    const q2vals = [m.scores[3],m.scores[4]].filter(v=>v!=null);
+    const q2avg = q2vals.length ? q2vals.reduce((a,b)=>a+b,0)/q2vals.length : null;
+    const qoq = (q2avg!=null&&q1avg>0) ? ((q2avg-q1avg)/q1avg*100) : null;
+    const qoqHtml = qoq!=null ? `<span style="font:600 10px/1.4 var(--font-ui);color:${qoq>=0?'var(--green)':'var(--red)'};margin-left:6px">${qoq>=0?'↑':'↓'}${Math.abs(qoq).toFixed(1)}% QoQ</span>` : '';
+    return `
     <div class="chart-card" id="ff-spider-wrap-${m.m}">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
-        <span style="font:700 13px/1 var(--font-ui);color:${m.color}">${m.m}</span>
-        <span style="padding:2px 8px;border-radius:10px;font:600 10px/1.4 var(--font-ui);background:${m.color}22;color:${m.color}">${m.t}</span>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="font:700 13px/1 var(--font-ui);color:${m.color}">${m.m}</span>
+          <span style="padding:2px 8px;border-radius:10px;font:600 10px/1.4 var(--font-ui);background:${m.color}22;color:${m.color}">${m.t}</span>
+        </div>
+        <div style="text-align:right">
+          ${avg!=null?`<div style="font:700 14px/1 var(--font-ui);color:${m.color}">${avg.toFixed(1)}<span style="font-size:10px;color:var(--text-light)">/10</span></div>`:''}
+          ${qoqHtml}
+        </div>
       </div>
       <div style="position:relative;height:200px"><canvas id="ff-spider-${m.m}"></canvas></div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 
   FF_MONTHLY.members.forEach(m=>{
     const data = FF_RADAR[m.m];
@@ -2053,10 +2074,20 @@ const COST_VERT_COLORS = {PTY:'var(--pty)',JOB:'var(--job)',VEH:'var(--veh)',GDS
 let editCost = null;
 
 function initEditCost() {
-  const d = S.data || {};
+  // Auto-pivot from activityRows if they have data; otherwise fall back to S.data.spend
+  const hasActData = activityRows.some(r => r.months.some(m => m > 0));
   editCost = {};
   COST_VERTS.forEach(v => {
-    editCost[v] = ((d.spend && d.spend[v]) || Array(12).fill(0)).map(b => Math.round(b * 1e9));
+    if (hasActData) {
+      const monthly = Array(12).fill(0);
+      activityRows.filter(r => (r.vert||'').toUpperCase() === v).forEach(row => {
+        row.months.forEach((amt, mi) => { monthly[mi] += amt; });
+      });
+      editCost[v] = monthly;
+    } else {
+      const d = S.data || {};
+      editCost[v] = ((d.spend && d.spend[v]) || Array(12).fill(0)).map(b => Math.round(b * 1e9));
+    }
   });
 }
 
@@ -2070,7 +2101,7 @@ function renderCostTable() {
     const clr = COST_VERT_COLORS[v];
     html += `<tr>
       <td class="row-label" style="color:${clr}">${v}</td>
-      ${editCost[v].map((val,mi)=>`<td contenteditable="true" data-v="${v}" data-mi="${mi}" style="color:var(--text)">${fmtVND(val)}</td>`).join('')}
+      ${editCost[v].map((val)=>`<td style="color:var(--text)">${fmtVND(val)}</td>`).join('')}
     </tr>`;
   });
   const totals = Array(12).fill(0).map((_,mi)=>COST_VERTS.reduce((s,v)=>(editCost[v][mi]||0)+s,0));
@@ -2079,9 +2110,6 @@ function renderCostTable() {
     ${totals.map(t=>`<td class="total-row">${fmtVND(t)}</td>`).join('')}
   </tr>`;
   tbody.innerHTML = html;
-
-  // Paste handler on cost table
-  tbody.addEventListener('paste', handleCostPaste, {once:false});
 }
 
 function handleCostPaste(e) {
@@ -2131,7 +2159,9 @@ function saveCostData() {
   updateCostTotals();
   if (!S.data) return;
   COST_VERTS.forEach(v => { S.data.spend[v] = editCost[v].map(n => n/1e9); });
-  renderPL(); renderBudgetPacing(); renderUE2();
+  renderPL(); renderUE2();
+  // Invalidate budget charts so they re-render on next tab-3 visit
+  ['chartContractType','chartCostType','chartMonthlySpend','chartWorkingNW'].forEach(k=>{if(S.charts.has(k)){S.charts.get(k).destroy();S.charts.delete(k);}});
   const msg = document.getElementById('cost-save-msg');
   msg.textContent = '✓ Đã lưu & cập nhật chart';
   setTimeout(()=>msg.textContent='', 3000);
@@ -2256,7 +2286,7 @@ function saveActData() {
     if (document.getElementById('cost-tbody')) renderCostTable();
   }
   ['chartContractType','chartCostType','chartMonthlySpend'].forEach(k=>{if(S.charts.has(k)){S.charts.get(k).destroy();S.charts.delete(k);}});
-  renderPL(); renderBudgetPacing(); renderUE2();
+  renderPL(); renderUE2();
   const msg=document.getElementById('act-save-msg');
   msg.textContent='✓ Đã lưu & cập nhật Budget Pacing';
   setTimeout(()=>msg.textContent='',3000);
