@@ -365,26 +365,21 @@ body{font-family:var(--font-ui);background:var(--bg);color:var(--text);font-size
 <!-- ── TAB 2: P&L ─────────────────────────────────── -->
 <div class="tab-panel" id="tab-2">
 
-  <div class="sub-tabs" id="pl-sub-tabs">
-    <div class="sub-tab active" onclick="setPLTab('pl',this)">💰 P&amp;L</div>
-    <div class="sub-tab" onclick="setPLTab('budget',this)">📊 Budget Pacing</div>
-    <div class="sub-tab" onclick="setPLTab('ue',this)">💡 Unit Economics</div>
-  </div>
-
-  <!-- VERTICAL FILTER (shared) -->
-  <div class="filter-row">
+  <!-- VERTICAL FILTER (shared, sticky) -->
+  <div class="filter-row" style="position:sticky;top:52px;z-index:90;background:var(--bg);padding:10px 0;margin-bottom:8px;border-bottom:1px solid var(--border)">
     <div style="font:600 11px/1 var(--font-ui);color:var(--navy-60);letter-spacing:.4px;text-transform:uppercase">▼ Vertical:</div>
     <div class="chip-group" id="pl-vert-filter">
       <button class="chip a-all" data-v="ALL" onclick="setPLVert('ALL',this)">All</button>
-      <button class="chip" data-v="PTY" onclick="setPLVert('PTY',this)"><span class="vtag vtag-pty">PTY</span></button>
-      <button class="chip" data-v="JOB" onclick="setPLVert('JOB',this)"><span class="vtag vtag-job">JOB</span></button>
-      <button class="chip" data-v="VEH" onclick="setPLVert('VEH',this)"><span class="vtag vtag-veh">VEH</span></button>
-      <button class="chip" data-v="GDS" onclick="setPLVert('GDS',this)"><span class="vtag vtag-gds">GDS</span></button>
+      <button class="chip" data-v="PTY" onclick="setPLVert('PTY',this)" style="color:var(--pty)">PTY</button>
+      <button class="chip" data-v="JOB" onclick="setPLVert('JOB',this)" style="color:var(--job)">JOB</button>
+      <button class="chip" data-v="VEH" onclick="setPLVert('VEH',this)" style="color:var(--veh)">VEH</button>
+      <button class="chip" data-v="GDS" onclick="setPLVert('GDS',this)" style="color:var(--gds)">GDS</button>
     </div>
   </div>
 
-  <!-- ── P&L sub-panel ────────────────────────────── -->
-  <div class="sub-panel active" id="sub-pl">
+  <!-- ── SECTION 1: P&L ──────────────────────────── -->
+  <div style="margin-bottom:16px"><div class="section-label">💰 P&amp;L — Revenue &amp; Spend</div></div>
+  <div id="sub-pl">
     <!-- KPI cards -->
     <div class="grid-4 mb-20">
       <div class="kpi-card" id="kpi-card-rev">
@@ -454,8 +449,9 @@ body{font-family:var(--font-ui);background:var(--bg);color:var(--text);font-size
     </div>
   </div>
 
-  <!-- ── Budget Pacing sub-panel ───────────────────── -->
-  <div class="sub-panel" id="sub-budget">
+  <!-- ── SECTION 2: Budget Pacing ─────────────────── -->
+  <div style="margin:32px 0 16px"><div class="section-label">📊 Budget Pacing</div></div>
+  <div id="sub-budget">
     <div class="grid-3 mb-20" style="grid-template-columns:2fr 1fr 1fr">
       <!-- By Track -->
       <div class="card">
@@ -491,8 +487,9 @@ body{font-family:var(--font-ui);background:var(--bg);color:var(--text);font-size
     </div>
   </div>
 
-  <!-- ── Unit Economics sub-panel ─────────────────── -->
-  <div class="sub-panel" id="sub-ue2">
+  <!-- ── SECTION 3: Unit Economics ────────────────── -->
+  <div style="margin:32px 0 16px"><div class="section-label">💡 Unit Economics</div></div>
+  <div id="sub-ue2">
     <div class="card mb-20" id="ue-header-card">
       <div style="font:700 12px/1 var(--font-ui);color:var(--navy-60);letter-spacing:.4px;text-transform:uppercase" id="ue-header-title">Unit Economics — All Chợ Tốt (4 verticals combined) · Web + App · Lifespan 2.51M</div>
     </div>
@@ -531,28 +528,10 @@ body{font-family:var(--font-ui);background:var(--bg);color:var(--text);font-size
     <div class="grid-2 mb-20">
       <div class="chart-card">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-          <div class="chart-title">LTV/CAC Monthly — by Vertical</div>
-          <div class="kpi-delta" id="ue-ltvcac-mom">—</div>
-        </div>
-        <div style="font:400 11px/1.4 var(--font-ui);color:var(--navy-60);margin-bottom:6px">LTV ÷ CAC · mỗi vertical là 1 line</div>
-        <div style="position:relative;height:240px"><canvas id="chartUELTVCAC"></canvas></div>
-      </div>
-      <div class="chart-card">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-          <div class="chart-title">VPL Monthly — by Vertical (K đ)</div>
-          <div class="kpi-delta" id="ue-vpl-mom">—</div>
-        </div>
-        <div style="font:400 11px/1.4 var(--font-ui);color:var(--navy-60);margin-bottom:6px">Revenue per Lead</div>
-        <div style="position:relative;height:240px"><canvas id="chartUEVPL"></canvas></div>
-      </div>
-    </div>
-    <div class="grid-2 mb-20">
-      <div class="chart-card">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-          <div class="chart-title">LTV Monthly — by Vertical (K đ)</div>
+          <div class="chart-title">LTV Monthly — by Vertical (M đ)</div>
           <div class="kpi-delta" id="ue-ltv-mom">—</div>
         </div>
-        <div style="font:400 11px/1.4 var(--font-ui);color:var(--navy-60);margin-bottom:6px">Lifetime Value = LPU × VPL × 2.51M</div>
+        <div style="font:400 11px/1.4 var(--font-ui);color:var(--navy-60);margin-bottom:6px">Lifetime Value = LPU × VPL × Lifespan</div>
         <div style="position:relative;height:240px"><canvas id="chartUELTV"></canvas></div>
       </div>
       <div class="chart-card">
@@ -560,72 +539,38 @@ body{font-family:var(--font-ui);background:var(--bg);color:var(--text);font-size
           <div class="chart-title">Blended CAC Monthly — by Vertical (K đ)</div>
           <div class="kpi-delta" id="ue-cac-mom">—</div>
         </div>
-        <div style="font:400 11px/1.4 var(--font-ui);color:var(--navy-60);margin-bottom:6px">Spend ÷ (MAU × 3% new users)</div>
+        <div style="font:400 11px/1.4 var(--font-ui);color:var(--navy-60);margin-bottom:6px">Spend ÷ New App MAU (actual data)</div>
         <div style="position:relative;height:240px"><canvas id="chartUECAC"></canvas></div>
       </div>
     </div>
-  </div>
-
-</div>
-
-<!-- ── TAB 3: MKT PERFORMANCE ─────────────────────── -->
-<div class="tab-panel" id="tab-3">
-  <div class="sec-hdr mb-20">
-    <div class="sec-icon">📊</div>
-    <div><h2>MKT Performance</h2><p>App Growth · Vertical Demand · Cohort Retention · Unit Economics</p></div>
-  </div>
-
-  <div class="sub-tabs" id="mkt-sub-tabs">
-    <div class="sub-tab active" onclick="setMktTab('app',this)">📱 App Growth</div>
-    <div class="sub-tab" onclick="setMktTab('demand',this)">📣 Vertical Demand</div>
-    <div class="sub-tab" onclick="setMktTab('cohort',this)">🔁 Cohort Retention</div>
-  </div>
-
-  <!-- App Growth — Section 5 only -->
-  <div class="sub-panel active" id="sub-app">
-    <div style="font:400 11px/1.4 var(--font-ui);color:var(--navy-60);margin-bottom:10px">
-      📌 Section 5: Growth Performance — Growth Channel (Paid+Display+CRM) ·
-      <a href="https://pubanhbao.github.io/chotot-app-growth/app-growth.html" target="_blank" style="color:var(--yellow-dark)">Open full dashboard →</a>
+    <div class="grid-2 mb-20">
+      <div class="chart-card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <div class="chart-title">LTV/CAC Monthly — by Vertical</div>
+          <div class="kpi-delta" id="ue-ltvcac-mom">—</div>
+        </div>
+        <div style="font:400 11px/1.4 var(--font-ui);color:var(--navy-60);margin-bottom:6px">LTV ÷ CAC · target &gt;3× · mỗi vertical là 1 line</div>
+        <div style="position:relative;height:240px"><canvas id="chartUELTVCAC"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <div class="chart-title">VPL Monthly — by Vertical (K đ)</div>
+          <div class="kpi-delta" id="ue-vpl-mom">—</div>
+        </div>
+        <div style="font:400 11px/1.4 var(--font-ui);color:var(--navy-60);margin-bottom:6px">Revenue per Lead (seller revenue ÷ leads)</div>
+        <div style="position:relative;height:240px"><canvas id="chartUEVPL"></canvas></div>
+      </div>
     </div>
-    <div class="iframe-clip" id="clip-app-growth" style="overflow:hidden;border-radius:10px;border:1px solid var(--navy-10)">
-      <iframe
-        src="https://pubanhbao.github.io/chotot-app-growth/app-growth.html"
-        id="iframe-app-growth"
-        style="width:100%;border:none;background:#fff;display:block"
-        loading="lazy"
-        title="App Growth Section 5"
-        onload="scrollIframeToSection('iframe-app-growth','clip-app-growth','.section-title',4,1300)">
-      </iframe>
-    </div>
-  </div>
-
-  <!-- Vertical Demand — Growth (Paid) & Growth (CRM) only -->
-  <div class="sub-panel" id="sub-demand">
-    <div style="font:400 11px/1.4 var(--font-ui);color:var(--navy-60);margin-bottom:10px">
-      📌 Growth Performance — Growth (Paid) &amp; Growth (CRM) ·
-      <a href="https://pubanhbao.github.io/chotot-marketplace-dashboard/" target="_blank" style="color:var(--yellow-dark)">Open full dashboard →</a>
-    </div>
-    <div class="iframe-clip" id="clip-demand" style="overflow:hidden;border-radius:10px;border:1px solid var(--navy-10)">
-      <iframe
-        src="https://pubanhbao.github.io/chotot-marketplace-dashboard/"
-        id="iframe-demand"
-        style="width:100%;border:none;background:#fff;display:block"
-        loading="lazy"
-        title="Vertical Demand Growth Performance"
-        onload="scrollIframeToSection('iframe-demand','clip-demand','.section-title',3,1400)">
-      </iframe>
-    </div>
-  </div>
-
-  <!-- Cohort Retention -->
-  <div class="sub-panel" id="sub-cohort">
+  <!-- ── SECTION 4: Cohort Retention ─────────────── -->
+  <div style="margin:32px 0 16px"><div class="section-label">🔁 Cohort Retention — MKT-Attributed New Users</div></div>
+  <div id="sub-cohort">
     <div class="filter-row">
       <div class="chip-group" id="cohort-vert-filter">
         <button class="chip a-all" data-v="ALL" onclick="setCohortVert('ALL',this)">All CT</button>
-        <button class="chip" data-v="PTY" onclick="setCohortVert('PTY',this)"><span class="vtag vtag-pty">PTY</span></button>
-        <button class="chip" data-v="JOB" onclick="setCohortVert('JOB',this)"><span class="vtag vtag-job">JOB</span></button>
-        <button class="chip" data-v="VEH" onclick="setCohortVert('VEH',this)"><span class="vtag vtag-veh">VEH</span></button>
-        <button class="chip" data-v="GDS" onclick="setCohortVert('GDS',this)"><span class="vtag vtag-gds">GDS</span></button>
+        <button class="chip" data-v="PTY" onclick="setCohortVert('PTY',this)" style="color:var(--pty)">PTY</button>
+        <button class="chip" data-v="JOB" onclick="setCohortVert('JOB',this)" style="color:var(--job)">JOB</button>
+        <button class="chip" data-v="VEH" onclick="setCohortVert('VEH',this)" style="color:var(--veh)">VEH</button>
+        <button class="chip" data-v="GDS" onclick="setCohortVert('GDS',this)" style="color:var(--gds)">GDS</button>
       </div>
     </div>
     <div class="grid-2 mb-20">
@@ -652,11 +597,23 @@ body{font-family:var(--font-ui);background:var(--bg);color:var(--text);font-size
 
 </div>
 
+<!-- ── TAB 3: MKT PERFORMANCE ─────────────────────── -->
+<div class="tab-panel" id="tab-3">
+  <div class="sec-hdr mb-20">
+    <div class="sec-icon">📊</div>
+    <div><h2>MKT Performance</h2><p>Overall · Branding · Digital Demand · App Growth</p></div>
+  </div>
+
+  <!-- MKT Performance rendered by JS into this container -->
+  <div id="mkt-perf-container"></div>
+
+</div>
+
 <!-- ── TAB 4: HEADCOUNT ─────────────────────────────── -->
 <div class="tab-panel" id="tab-4">
   <div class="sec-hdr mb-20">
     <div class="sec-icon">👥</div>
-    <div><h2>Headcount & People</h2><p>Org chart, OKR Q2 2026, Feedforward 360°</p></div>
+    <div><h2>Headcount & People</h2><p>Org chart · Feedforward 360° · Monthly trend</p></div>
   </div>
 
   <!-- Org Chart — inline -->
@@ -775,26 +732,10 @@ body{font-family:var(--font-ui);background:var(--bg);color:var(--text);font-size
     </div>
   </div>
 
-  <!-- OKR Q2 2026 -->
-  <div class="card mb-24">
-    <div class="chart-title mb-4">🎯 OKR Progress — Q2 2026</div>
-    <div style="font:400 11px/1.4 var(--font-ui);color:var(--navy-60);margin-bottom:16px">% completion tự đánh giá end of quarter · 0–100%</div>
-    <div class="grid-2 mb-16">
-      <div class="chart-card"><div class="chart-title">Team OKR — by Track</div><div class="chart-wrap"><canvas id="chartOKRTeam"></canvas></div></div>
-      <div class="chart-card"><div class="chart-title">Individual OKR — by Member</div><div class="chart-wrap"><canvas id="chartOKRMember"></canvas></div></div>
-    </div>
-    <div style="overflow-x:auto">
-      <table class="dt">
-        <thead><tr><th>Member</th><th>Track</th><th>OKR</th><th class="r">Q1</th><th class="r">Q2</th><th>Status</th></tr></thead>
-        <tbody id="okr-tbody"></tbody>
-      </table>
-    </div>
-  </div>
-
   <!-- Feedforward 360° -->
   <div class="card">
-    <div class="chart-title mb-4">💬 Feedforward 360° — Q2 2026</div>
-    <div style="font:400 11px/1.4 var(--font-ui);color:var(--navy-60);margin-bottom:16px">Monthly avg score (thang 1–10) · Mỗi member 1 line · 6 chiều: Tư duy, Thích nghi, Giao tiếp, Hợp tác, Chủ động, Trách nhiệm</div>
+    <div class="chart-title mb-4">💬 Feedforward 360° — Monthly Trend</div>
+    <div style="font:400 11px/1.4 var(--font-ui);color:var(--navy-60);margin-bottom:16px">Monthly avg score (thang 1–10) · Mỗi member 1 line · Click tên member để xem spider chart 6 chiều</div>
     <div class="chart-card mb-16">
       <div class="chart-title">Monthly Trend — All Members</div>
       <div style="position:relative;height:300px"><canvas id="chartFFTrend"></canvas></div>
@@ -812,6 +753,17 @@ body{font-family:var(--font-ui);background:var(--bg);color:var(--text);font-size
   </div>
 </div>
 
+<!-- ── Spider Chart Modal ─────────────────────────── -->
+<div id="spider-modal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(15,23,42,.6);backdrop-filter:blur(4px);align-items:center;justify-content:center">
+  <div style="background:var(--surface);border-radius:14px;padding:24px;width:min(440px,92vw);position:relative;box-shadow:0 24px 64px rgba(0,0,0,.25)">
+    <button onclick="closeSpider()" style="position:absolute;top:14px;right:14px;border:none;background:var(--navy-10);border-radius:6px;padding:4px 10px;cursor:pointer;font:600 12px/1.4 var(--font-ui);color:var(--text-light)">✕</button>
+    <div id="spider-name" style="font:700 15px/1.3 var(--font-ui);color:var(--text);margin-bottom:2px"></div>
+    <div id="spider-track" style="font:400 11px/1 var(--font-ui);color:var(--text-light);margin-bottom:16px"></div>
+    <div style="position:relative;height:280px"><canvas id="chartSpider"></canvas></div>
+    <div style="margin-top:14px;display:grid;grid-template-columns:1fr 1fr;gap:6px" id="spider-scores"></div>
+  </div>
+</div>
+
 
 <script>
 // ── Chart.js global defaults ──────────────────────────────────────────
@@ -820,6 +772,7 @@ Chart.defaults.font.size = 11;
 Chart.defaults.color = '#6b7280';
 Chart.defaults.borderColor = '#f3f4f6';
 Chart.defaults.plugins.legend.labels.usePointStyle = true;
+Chart.defaults.plugins.legend.labels.pointStyle = 'circle';
 Chart.defaults.plugins.legend.labels.padding = 14;
 Chart.defaults.plugins.tooltip.backgroundColor = '#1e293b';
 Chart.defaults.plugins.tooltip.titleColor = '#fff';
@@ -847,6 +800,19 @@ const S = {
 const f1 = v => v == null ? '—' : v.toFixed(1);
 const f2 = v => v == null ? '—' : v.toFixed(2);
 const fK = v => v == null ? '—' : (v >= 1000 ? (v/1000).toFixed(1)+'M' : v.toFixed(0)+'K');
+// Format K VND: ≥1000K → "X.XM đ", <1000K → "17.700 đ" (raw VND with vi-VN dot separator)
+const fVND = v => {
+  if (v == null || isNaN(v)) return '—';
+  if (v >= 1000) return (v/1000).toFixed(1)+'M đ';
+  return Math.round(v*1000).toLocaleString('vi-VN')+' đ';
+};
+const fBig = v => {
+  if (v == null) return '—';
+  if (v >= 1e6)  return (v/1e6).toFixed(1)+'M';
+  if (v >= 1000) return (v/1000).toFixed(0)+'K';
+  if (v >= 10)   return v.toFixed(0);
+  return v.toFixed(2);
+};
 const fB = v => v == null ? '—' : v.toFixed(3)+'B';
 
 function makeChart(id, cfg) {
@@ -880,18 +846,9 @@ function switchTab(n) {
   document.querySelectorAll('.hdr-tab').forEach(t => t.classList.remove('active'));
   document.getElementById('tab-'+n).classList.add('active');
   document.querySelectorAll('.hdr-tab')[n-1].classList.add('active');
-  if (n===2 && S.data) { plTab='pl'; renderPL(); }
-  if (n===3 && S.data) renderMKT();
+  if (n===2 && S.data) { renderPL(); renderBudgetPacing(); renderUE2(); renderCohort(); }
+  if (n===3 && S.data) renderMKTPerf();
   if (n===4) renderHC();
-}
-function setMktTab(id, el) {
-  document.querySelectorAll('#mkt-sub-tabs .sub-tab').forEach(t=>t.classList.remove('active'));
-  document.querySelectorAll('#tab-3 .sub-panel').forEach(p=>p.classList.remove('active'));
-  el.classList.add('active');
-  document.getElementById('sub-'+id).classList.add('active');
-  if (S.data) {
-    if(id==='cohort') renderCohort();
-  }
 }
 
 // ── Data loading ──────────────────────────────────────────────────────
@@ -1014,29 +971,20 @@ function scrollIframeToSection(iframeId, clipId, selector, sectionIndex, viewHei
   setTimeout(tryScroll, 800); // initial delay — wait for React render
 }
 
-// ── P&L sub-tab switching ────────────────────────────────────────────
-let plTab = 'pl';
-function setPLTab(id, el) {
-  plTab = id;
-  document.querySelectorAll('#pl-sub-tabs .sub-tab').forEach(t=>t.classList.remove('active'));
-  document.querySelectorAll('#tab-2 .sub-panel').forEach(p=>p.classList.remove('active'));
-  el.classList.add('active');
-  document.getElementById('sub-'+id+(id==='ue'?'2':'')).classList.add('active');
-  if (!S.data) return;
-  if (id==='pl') renderPL();
-  if (id==='budget') renderBudgetPacing();
-  if (id==='ue') renderUE2();
-}
-
 // ── P&L rendering ─────────────────────────────────────────────────────
 let plVert = 'ALL';
 function setPLVert(v, el) {
   plVert = v;
   document.querySelectorAll('#pl-vert-filter .chip').forEach(c=>{
-    c.className='chip'; if(c.dataset.v===v) c.classList.add('a-'+v.toLowerCase());
+    c.className='chip';
+    if (c.dataset.v===v) c.classList.add('a-'+v.toLowerCase());
+    else {
+      const colors={PTY:'var(--pty)',JOB:'var(--job)',VEH:'var(--veh)',GDS:'var(--gds)'};
+      if (colors[c.dataset.v]) c.style.color=colors[c.dataset.v];
+    }
   });
-  if (plTab==='pl') renderPL();
-  if (plTab==='ue') renderUE2();
+  if (!S.data) return;
+  renderPL(); renderUE2();
 }
 
 function getRevArr() {
@@ -1329,17 +1277,19 @@ function renderUE2() {
   }
 
   // Calculate UE metrics per month
-  const vpl   = months.map((_,i) => { const l=totalLeadsM(i); return l>0 ? totalRevM(i)*1e9/l/1000 : null; }); // K VND
+  // leads data is in K (e.g. 1249 = 1249K actual leads), so divide by l*1000 then /1000 for K VND
+  const vpl   = months.map((_,i) => { const l=totalLeadsM(i); return l>0 ? totalRevM(i)*1e9/l/1e6 : null; }); // K VND
   const lpu   = months.map((_,i) => { const m=totalVMAUM(i); return m>0 ? totalLeadsM(i)/m : null; });
   const ltv   = months.map((_,i) => lpu[i]!=null&&vpl[i]!=null ? lpu[i]*vpl[i]*LIFESPAN : null);
-  const cac   = months.map((_,i) => { const mau=totalVMAUM(i); return mau>0 ? totalSpendM(i)*1e9/(mau*1000*NUR)/1000 : null; }); // K VND
+  // CAC: use actual new_app_mau data instead of vMAU*NUR estimate
+  const cac   = months.map((_,i) => { const nu=d.new_app_mau[i]; return nu>0 ? totalSpendM(i)*1e9/nu/1000 : null; }); // K VND
   const ltvcac = months.map((_,i) => ltv[i]!=null&&cac[i]>0 ? ltv[i]/cac[i] : null);
 
   const li = ACT-1; // last month index
-  document.getElementById('kpi-vpl').textContent   = vpl[li]!=null  ? f1(vpl[li])+'K đ'    : '—';
+  document.getElementById('kpi-vpl').textContent   = fVND(vpl[li]);
   document.getElementById('kpi-lpu').textContent   = lpu[li]!=null  ? lpu[li].toFixed(4)    : '—';
-  document.getElementById('kpi-ltv2').textContent  = ltv[li]!=null  ? f1(ltv[li])+'K đ'    : '—';
-  document.getElementById('kpi-cac2').textContent  = cac[li]!=null  ? f1(cac[li])+'K đ'    : '—';
+  document.getElementById('kpi-ltv2').textContent  = fVND(ltv[li]);
+  document.getElementById('kpi-cac2').textContent  = fVND(cac[li]);
   const lvc = ltvcac[li];
   document.getElementById('kpi-ltvcac2').textContent = lvc!=null ? f2(lvc)+'×' : '—';
   document.getElementById('kpi-ltvcac2').style.color = lvc!=null&&lvc>=3 ? '#00843D' : C.red;
@@ -1368,10 +1318,15 @@ function renderUE2() {
     const lv=months.map((_,i)=>d.leads[v]?.[i]||0);
     const mv=months.map((_,i)=>d.vmau[v]?.[i]||0);
     const sv=months.map((_,i)=>d.spend[v]?.[i]||0);
-    const vplV = rv.map((r,i)=>lv[i]>0?r*1e9/lv[i]/1000:null);
+    const vplV = rv.map((r,i)=>lv[i]>0?r*1e9/lv[i]/1e6:null);
     const lpuV = lv.map((l,i)=>mv[i]>0?l/mv[i]:null);
     const ltvV = vplV.map((v2,i)=>v2!=null&&lpuV[i]!=null?lpuV[i]*v2*LIFESPAN:null);
-    const cacV = sv.map((s,i)=>mv[i]>0?s*1e9/(mv[i]*1000*NUR)/1000:null);
+    const cacV = sv.map((s,i)=>{
+      const nu=d.new_app_mau[i]; if(!nu) return null;
+      const vTot=['PTY','JOB','VEH','GDS'].reduce((sum,vv)=>(d.vmau[vv]?.[i]||0)+sum,0);
+      const share=vTot>0?(mv[i]||0)/vTot:0;
+      return share>0 ? s*1e9/(nu*share)/1000 : null;
+    });
     const lvcV = ltvV.map((l,i)=>l!=null&&cacV[i]>0?l/cacV[i]:null);
     return {vpl:vplV,ltv:ltvV,cac:cacV,lvc:lvcV};
   }
@@ -1615,6 +1570,17 @@ const OKR_DATA = [
 ];
 
 const FF_DIMS = ['Tư duy','Thích nghi','Giao tiếp','Hợp tác','Chủ động','Trách nhiệm'];
+// Per-dimension radar scores for each member (latest quarter) — update each quarter
+const FF_RADAR = {
+  Lox:   [9.0,8.5,8.8,9.0,8.5,9.0],
+  Én:    [8.0,8.2,8.5,8.3,8.0,8.2],
+  Yến:   [8.0,7.8,8.2,8.0,7.8,8.0],
+  Phát:  [9.0,8.8,8.5,8.8,9.0,9.0],
+  Sho:   [8.5,8.3,8.5,8.5,8.3,8.5],
+  Tân:   [8.0,8.0,8.2,8.0,8.0,8.0],
+  Duyên: [8.0,8.2,8.0,8.5,8.0,8.5],
+  Kiệt:  [7.8,7.6,8.0,7.8,7.5,8.0],
+};
 
 // Feedforward monthly avg score per member — Jan–May 2026
 const FF_MONTHLY = {
@@ -1658,46 +1624,9 @@ const HC_DATA = [
   ['VEH Vouchers',  'Vertical', 'VEH','working',     0.5, 'Vouchers – VEH supply',                      'Operation'],
 ];
 function renderHC() {
-  if (S.charts.has('chartOKRTeam')) return; // already rendered
+  if (S.charts.has('chartFFTrend')) return;
 
   const TRACK_CLR = {Growth:C.purple,Brand:C.pty,Design:C.veh};
-
-  // OKR Team chart — avg q2 per track
-  const tracks = ['Growth','Brand','Design'];
-  const teamQ1 = tracks.map(t => { const r=OKR_DATA.filter(o=>o.t===t); return r.length?Math.round(r.reduce((s,o)=>s+o.q1,0)/r.length):0; });
-  const teamQ2 = tracks.map(t => { const r=OKR_DATA.filter(o=>o.t===t); return r.length?Math.round(r.reduce((s,o)=>s+o.q2,0)/r.length):0; });
-  makeChart('chartOKRTeam',{type:'bar',data:{
-    labels:tracks,
-    datasets:[
-      {label:'Q1 2026',data:teamQ1,backgroundColor:['#7c3aed55','#e91e6355','#2196f355'],borderColor:[C.purple,C.pty,C.veh],borderWidth:2},
-      {label:'Q2 2026',data:teamQ2,backgroundColor:[C.purple+'88',C.pty+'88',C.veh+'88'],borderColor:[C.purple,C.pty,C.veh],borderWidth:2},
-    ]
-  },options:{...barOpts(),scales:{...barOpts().scales,y:{...barOpts().scales.y,max:100,ticks:{callback:v=>v+'%'}}}}});
-
-  // OKR member chart
-  const members = [...new Set(OKR_DATA.map(o=>o.m))];
-  const memQ2 = members.map(m => { const r=OKR_DATA.filter(o=>o.m===m); return r.length?Math.round(r.reduce((s,o)=>s+o.q2,0)/r.length):0; });
-  const memClrs = members.map(m => { const o=OKR_DATA.find(d=>d.m===m); return TRACK_CLR[o?.t]||C.all; });
-  makeChart('chartOKRMember',{type:'bar',data:{
-    labels:members,
-    datasets:[{label:'Q2 OKR % avg',data:memQ2,backgroundColor:memClrs.map(c=>c+'88'),borderColor:memClrs,borderWidth:2}]
-  },options:{...barOpts(),scales:{...barOpts().scales,y:{...barOpts().scales.y,max:100,ticks:{callback:v=>v+'%'}}}}});
-
-  // OKR table
-  const okrTb = document.getElementById('okr-tbody');
-  okrTb.innerHTML = OKR_DATA.map(o=>{
-    const tc = TRACK_CLR[o.t]||C.all;
-    const sClr = o.s==='done'?'#00843D':o.s==='on-track'?C.veh:'#C62828';
-    const sBg  = o.s==='done'?'var(--green-bg)':o.s==='on-track'?'var(--veh-bg)':'var(--red-bg)';
-    return `<tr>
-      <td>${o.m}</td>
-      <td><span style="padding:2px 8px;border-radius:12px;font:600 10px/1.4 var(--font-ui);background:${tc}22;color:${tc}">${o.t}</span></td>
-      <td style="font-size:11px">${o.okr}</td>
-      <td class="mono">${o.q1}%</td>
-      <td class="mono"><strong>${o.q2}%</strong></td>
-      <td><span style="padding:2px 8px;border-radius:4px;font:600 10px/1 var(--font-ui);background:${sBg};color:${sClr}">${o.s}</span></td>
-    </tr>`;
-  }).join('');
 
   // FF Monthly Trend chart — one line per member
   makeChart('chartFFTrend',{type:'line',data:{
@@ -1723,10 +1652,9 @@ function renderHC() {
   // FF table — monthly scores + Q2 avg
   const ffTb = document.getElementById('ff-tbody');
   ffTb.innerHTML = FF_MONTHLY.members.map(m=>{
-    const q2avg = (m.scores.slice(-3).reduce((a,b)=>a+b,0)/3).toFixed(1); // Mar-May avg as Q2
-    const tc = TRACK_CLR[m.t]||C.all;
+    const q2avg = (m.scores.slice(-3).reduce((a,b)=>a+b,0)/3).toFixed(1);
     return `<tr>
-      <td>${m.m}</td>
+      <td><button onclick="openSpider('${m.m}','${m.t}','${m.color}')" style="background:none;border:none;cursor:pointer;font:600 13px/1 var(--font-ui);color:${m.color};text-decoration:underline;padding:0">${m.m} ↗</button></td>
       <td><span style="padding:2px 8px;border-radius:12px;font:600 10px/1.4 var(--font-ui);background:${m.color}22;color:${m.color}">${m.t}</span></td>
       ${m.scores.map(v=>`<td class="mono">${v.toFixed(1)}</td>`).join('')}
       <td class="mono"><strong>${q2avg}</strong></td>
@@ -1734,6 +1662,176 @@ function renderHC() {
   }).join('');
 }
 
+
+// ── Spider modal ──────────────────────────────────────────────────────
+function openSpider(name, track, color) {
+  const data = FF_RADAR[name];
+  if (!data) return;
+  document.getElementById('spider-modal').style.display = 'flex';
+  document.getElementById('spider-name').textContent = name;
+  document.getElementById('spider-track').textContent = track + ' · Click ngoài để đóng';
+  document.getElementById('spider-scores').innerHTML = FF_DIMS.map((d,i)=>`
+    <div style="display:flex;justify-content:space-between;padding:4px 8px;background:var(--surface-2);border-radius:5px;font:400 11px/1.4 var(--font-ui)">
+      <span style="color:var(--text-light)">${d}</span>
+      <strong style="color:${color}">${data[i].toFixed(1)}</strong>
+    </div>`).join('');
+  if (S.charts.has('chartSpider')) S.charts.get('chartSpider').destroy();
+  const c = new Chart(document.getElementById('chartSpider').getContext('2d'),{
+    type:'radar',
+    data:{
+      labels:FF_DIMS,
+      datasets:[{label:name,data,borderColor:color,backgroundColor:color+'30',
+        borderWidth:2,pointRadius:4,pointBackgroundColor:color}]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>` ${ctx.label}: ${ctx.raw.toFixed(1)}`}}},
+      scales:{r:{min:6,max:10,ticks:{stepSize:1,font:{size:10},backdropColor:'transparent'},
+        pointLabels:{font:{size:11,family:"'Inter',sans-serif"}},
+        grid:{color:'#e5e7eb'},angleLines:{color:'#e5e7eb'}}}
+    }
+  });
+  S.charts.set('chartSpider',c);
+}
+function closeSpider() {
+  document.getElementById('spider-modal').style.display='none';
+}
+document.addEventListener('click', e=>{
+  const m=document.getElementById('spider-modal');
+  if (m && e.target===m) closeSpider();
+});
+
+// ── MKT Performance data (May 2026 actuals) ──────────────────────────
+const MKT_PERF = {
+  branding:{
+    labels:['# Content & creative','# Content viewer','# Brand kw impr.','# Content interaction','# Social follower uplift','# Brand kw click'],
+    isOutput:[false,false,false,true,true,true],
+    higherBetter:[true,true,true,true,true,true],
+    data:{
+      PTY:{actual:[26,2185279,339707,42999,185,26997],  target:[33,2390241,308373,12494,440,24151]},
+      JOB:{actual:[32,1795527,239283,36653,553,53087],  target:[33,2476435,171770,24333,413,47391]},
+      VEH:{actual:[8,735198,715558,4143,374,62877],     target:[14,1148392,708754,7285,449,65399]},
+      GDS:{actual:[9,926338,956092,22383,1845,785938],  target:[7,1300778,948265,28747,1524,779051]},
+    }
+  },
+  digital_demand:{
+    labels:['cp DAU','cp DwL','cp Lead','CR to lead (%)','DAU','DwL','Lead'],
+    isOutput:[false,false,false,false,true,true,true],
+    higherBetter:[true,true,true,true,true,true,true],
+    data:{
+      PTY:{actual:[762,7312,2369,10.40,17026,1773,169727],  target:[761,7166,2232,10.60,17911,1902,183214]},
+      JOB:{actual:[953,6724,2332,14.20,12592,1785,159578],  target:[826,6418,2463,12.90,15663,2017,162912]},
+      VEH:{actual:[235,3989,529,5.90,16815,992,299125],     target:[324,5501,1492,5.90,15338,903,103239]},
+      GDS:{actual:[186,1920,926,9.70,11906,1153,95661],     target:[225,2166,828,10.40,13064,1356,109945]},
+    }
+  },
+  app_growth:{
+    labels:['CPI (đ)','CTR (%)','# App install','# Activated user','D1 RR (%)'],
+    isOutput:[false,false,true,true,true],
+    higherBetter:[false,false,false,true,true],
+    data:{
+      PTY:{actual:[21928,6.89,27764,7359,36.61],  target:[20038,7.62,38462,7003,28.47]},
+      JOB:{actual:[13506,5.13,38172,9751,28.47],  target:[11565,5.57,41667,11365,37.17]},
+      VEH:{actual:[null,null,null,null,null],      target:[null,null,null,null,null]},
+      GDS:{actual:[16890,4.19,15018,2922,35.68],  target:[15890,3.71,null,3485,39.43]},
+    }
+  },
+};
+
+// ── MKT Performance rendering ─────────────────────────────────────────
+function renderMKTPerf() {
+  const container = document.getElementById('mkt-perf-container');
+  if (!container) return;
+
+  const VERTS=['PTY','JOB','VEH','GDS'];
+  const VCOLS={PTY:'var(--pty)',JOB:'var(--job)',VEH:'var(--veh)',GDS:'var(--gds)'};
+
+  const pctAchieve = (a, t, hb) => {
+    if (a==null||t==null||t===0) return null;
+    return hb ? a/t*100 : (2-a/t)*100;
+  };
+  const pctBadge = p => {
+    if (p==null) return '<span style="color:var(--text-faint)">—</span>';
+    const bg=p>=100?'var(--green-bg)':p>=80?'var(--orange-bg)':'var(--red-bg)';
+    const fg=p>=100?'var(--green)':p>=80?'var(--orange)':'var(--red)';
+    return `<span style="padding:1px 6px;border-radius:4px;font:700 10px/1.5 var(--font-mono);background:${bg};color:${fg}">${Math.round(p)}%</span>`;
+  };
+
+  // Overall summary
+  const sects=[
+    {key:'branding',label:'🎨 Branding',color:C.pty},
+    {key:'digital_demand',label:'📣 Digital Demand',color:C.veh},
+    {key:'app_growth',label:'📱 App Growth',color:C.purple},
+  ];
+  const avgOut = (key,vert) => {
+    const s=MKT_PERF[key],vd=s.data[vert];
+    const vals=s.labels.map((_,i)=>s.isOutput[i]?pctAchieve(vd.actual[i],vd.target[i],s.higherBetter[i]):null).filter(v=>v!=null);
+    return vals.length?vals.reduce((a,b)=>a+b,0)/vals.length:null;
+  };
+
+  let html = `
+  <div style="margin-bottom:16px"><div class="section-label">📊 Overall Achievement — May 2026</div></div>
+  <div class="card mb-24" style="overflow-x:auto">
+    <table class="dt" style="min-width:500px">
+      <thead><tr>
+        <th>Category</th>
+        <th class="r" style="color:var(--pty)">PTY</th>
+        <th class="r" style="color:var(--job)">JOB</th>
+        <th class="r" style="color:var(--veh)">VEH</th>
+        <th class="r" style="color:var(--gds)">GDS/ALL</th>
+      </tr></thead>
+      <tbody>
+        ${sects.map(s=>`<tr>
+          <td style="font:600 12px/1 var(--font-ui)">${s.label}</td>
+          ${VERTS.map(v=>`<td style="text-align:right">${pctBadge(avgOut(s.key,v))}</td>`).join('')}
+        </tr>`).join('')}
+      </tbody>
+    </table>
+  </div>`;
+
+  // Per-section detail
+  sects.forEach(sm => {
+    const sec = MKT_PERF[sm.key];
+    const rows = sec.labels.map((label,mi)=>{
+      const isOut=sec.isOutput[mi], hb=sec.higherBetter[mi];
+      const cells=VERTS.map(v=>{
+        const vd=sec.data[v],a=vd.actual[mi],t=vd.target[mi],p=pctAchieve(a,t,hb);
+        return `<td>
+          <div style="font:600 11px/1.2 var(--font-mono)">${fBig(a)}</div>
+          <div style="font:400 10px/1.3 var(--font-ui);color:var(--text-faint)">/${fBig(t)}</div>
+          <div>${pctBadge(p)}</div>
+        </td>`;
+      }).join('');
+      return `<tr style="${isOut?'background:var(--accent-light)':''}">
+        <td style="font:${isOut?'700':'400'} 11px/1.4 var(--font-ui)">${isOut?'▸ ':''}<span style="color:${isOut?'var(--text)':'var(--text-light)'}">${label}</span></td>
+        <td><span style="padding:1px 5px;border-radius:3px;font:600 9px/1.4 var(--font-ui);background:${isOut?'var(--accent)':'var(--navy-10)'};color:${isOut?'#fff':'var(--navy-60)'}">${isOut?'Output':'Input'}</span></td>
+        ${cells}
+      </tr>`;
+    }).join('');
+
+    html += `
+    <div style="margin:28px 0 14px"><div class="section-label">${sm.label}</div></div>
+    <div class="card mb-4" style="overflow-x:auto">
+      <div style="font:400 11px/1.4 var(--font-ui);color:var(--navy-60);margin-bottom:12px">May 2026 · Actual / Target / % · Output rows highlighted</div>
+      <table class="dt" style="min-width:600px">
+        <thead><tr>
+          <th>Metric</th><th>Type</th>
+          <th style="color:var(--pty)">PTY</th>
+          <th style="color:var(--job)">JOB</th>
+          <th style="color:var(--veh)">VEH</th>
+          <th style="color:var(--gds)">GDS/ALL</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
+  });
+
+  html += `<div style="margin-top:20px;padding:12px 16px;background:var(--accent-light);border-radius:8px;border-left:3px solid var(--accent);font:400 11px/1.5 var(--font-ui);color:var(--navy-60)">
+    📌 Hiện tại chỉ có data tháng 5. Monthly trend chart sẽ bổ sung sau khi có data các tháng trước (Jan–Apr).
+  </div>`;
+
+  container.innerHTML = html;
+}
 
 // ── Init ──────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', loadData);
