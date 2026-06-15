@@ -109,11 +109,11 @@ body{font-family:var(--font-ui);background:var(--bg);color:var(--text);font-size
 .section-label::before{content:'';display:block;width:4px;height:20px;background:var(--accent);border-radius:2px;flex-shrink:0}
 
 /* ── Tables ─────────────────────────────────────── */
-.dt{width:100%;border-collapse:collapse;font:400 12px/1.4 var(--font-ui)}
+.dt{width:100%;border-collapse:collapse;font:400 11px/1.5 var(--font-ui);color:var(--navy-60)}
 .dt thead th{padding:8px 10px;text-align:left;font:600 11px/1 var(--font-ui);color:var(--text-light);letter-spacing:.05em;text-transform:uppercase;border-bottom:1px solid var(--border);background:var(--surface-2);white-space:nowrap}
 .dt thead th.r{text-align:right}
-.dt tbody td{padding:8px 10px;border-bottom:1px solid var(--border-light);color:var(--text-dim);vertical-align:middle}
-.dt tbody td.mono{font-family:var(--font-mono);font-size:12px;font-weight:600;color:var(--text);text-align:right}
+.dt tbody td{padding:8px 10px;border-bottom:1px solid var(--border-light);color:var(--navy-60);vertical-align:middle}
+.dt tbody td.mono{font-family:var(--font-mono);font-size:11px;font-weight:400;color:var(--navy-60);text-align:right}
 .dt tbody tr:last-child td{border-bottom:none}
 .dt tbody tr:hover td{background:var(--surface-2)}
 .dt tbody td:first-child{font-weight:600;color:var(--text)}
@@ -573,12 +573,6 @@ body{font-family:var(--font-ui);background:var(--bg);color:var(--text);font-size
         <button class="chip" data-v="GDS" onclick="setCohortVert('GDS',this)" style="color:var(--gds)">GDS</button>
       </div>
     </div>
-    <div class="chart-card mb-20">
-      <div class="chart-title mb-4">Cohort Retention D1 / D7 / D30</div>
-      <div style="font:400 11px/1.4 var(--font-ui);color:var(--navy-60);margin-bottom:6px">% new users returning on Day 1, Day 7, Day 30. <strong>D30 ≈ M1</strong> (same metric, different time unit).</div>
-      <div id="cohort-nurr-note" style="font:400 11px/1.4 var(--font-ui);color:var(--orange);margin-bottom:6px;min-height:16px"></div>
-      <div class="chart-wrap-lg"><canvas id="chartCohortNURR"></canvas></div>
-    </div>
     <div class="grid-2 mb-20">
       <div class="chart-card"><div class="chart-title mb-4">Cohort Size — New Users per Month</div><div style="font:400 11px/1.4 var(--font-ui);color:var(--navy-60);margin-bottom:6px">All platforms, all sources. ALL CT = tổng toàn sàn.</div><div class="chart-wrap-lg"><canvas id="chartCohortSize"></canvas></div></div>
       <div class="chart-card"><div class="chart-title mb-4">Cohort Retention — M1/M2/M3 (%)</div><div style="font:400 11px/1.4 var(--font-ui);color:var(--navy-60);margin-bottom:6px">Monthly retention: % users returning each subsequent month.</div><div class="chart-wrap-lg"><canvas id="chartCohort"></canvas></div></div>
@@ -888,8 +882,8 @@ body{font-family:var(--font-ui);background:var(--bg);color:var(--text);font-size
       <span style="font:600 11px/1 var(--font-ui);color:var(--text-light)">Tháng:</span>
       <div id="mbr-month-filter" style="display:flex;gap:6px;flex-wrap:wrap"></div>
     </div>
-    <div style="overflow-x:auto;border-radius:10px;border:1px solid var(--border);background:var(--surface)">
-      <table class="itable" id="mbr-table" style="min-width:1100px"></table>
+    <div style="border-radius:10px;border:1px solid var(--border);background:var(--surface)">
+      <table id="mbr-table" style="width:100%;border-collapse:collapse;table-layout:fixed"></table>
     </div>
     <div style="display:flex;gap:10px;margin-top:10px;align-items:center;flex-wrap:wrap">
       <button onclick="saveMBRData()" style="background:var(--accent);color:#fff;border:none;border-radius:7px;padding:7px 18px;font:600 12px/1 var(--font-ui);cursor:pointer">💾 Lưu</button>
@@ -1310,8 +1304,8 @@ function renderPL() {
   const showVerts = plVert==='ALL' ? ['ALL',...VERTS4] : [plVert];
   const VERT_CLR = {ALL:C.all,PTY:C.pty,JOB:C.job,VEH:C.veh,GDS:C.gds};
   gridEl.style.gridTemplateColumns = '1fr';
-  const thT = 'padding:6px 10px;font:600 11px/1 var(--font-ui);color:var(--navy-60);white-space:nowrap;border-bottom:2px solid var(--border)';
-  const tdT = 'text-align:right;font:400 12px/1.4 var(--font-mono);padding:4px 10px;white-space:nowrap';
+  const thT = 'padding:6px 10px;font:600 11px/1 var(--font-ui);color:var(--text-light);white-space:nowrap;border-bottom:2px solid var(--border)';
+  const tdT = 'text-align:right;font:400 11px/1.5 var(--font-mono);color:var(--navy-60);padding:4px 10px;white-space:nowrap';
   let tbl = `<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse">
     <thead><tr style="background:var(--surface-2)">
       <th style="${thT};text-align:left;min-width:55px">Vertical</th>
@@ -1332,8 +1326,8 @@ function renderPL() {
     ];
     metricRows.forEach((mr,mri)=>{
       tbl+=`<tr style="${bg}">
-        ${mri===0?`<td rowspan="4" style="font:700 12px/1.4 var(--font-ui);padding:4px 10px;color:${clr};border-right:2px solid ${clr}33;vertical-align:middle;text-align:center;${topBorder}">${v}</td>`:''}
-        <td style="font:500 12px/1.4 var(--font-ui);padding:4px 10px;color:var(--text-light);white-space:nowrap;${mri===0?topBorder:''}">${mr.label}</td>
+        ${mri===0?`<td rowspan="4" style="font:400 11px/1.5 var(--font-ui);padding:4px 10px;color:${clr};border-right:2px solid ${clr}33;vertical-align:middle;text-align:center;font-weight:600;${topBorder}">${v}</td>`:''}
+        <td style="font:400 11px/1.5 var(--font-ui);padding:4px 10px;color:var(--navy-60);white-space:nowrap;${mri===0?topBorder:''}">${mr.label}</td>
         ${mr.vals.map((val,i)=>`<td style="${tdT}">${mr.fmt(val,i)}</td>`).join('')}
       </tr>`;
     });
@@ -1985,20 +1979,6 @@ function renderCohort() {
   makeChart('chartCohortSize',{type:'line',data:{labels,datasets:sizeDatasets},options:{...sizeOpts,
     plugins:{legend:{position:'bottom',labels:{font:{size:10},padding:8}},
       tooltip:{callbacks:{label:ctx=>{const v=ctx.raw;if(v==null)return '';const lbl=v>=1?f1(v)+'M users':Math.round(v*1000)+'K users';return `${ctx.dataset.label}: ${lbl}`;}}}}}});
-
-  // D1/D7/D30 retention chart — All CT only (no per-vertical data available)
-  const nurrNote = document.getElementById('cohort-nurr-note');
-  if (nurrNote) nurrNote.textContent = cohortVert !== 'ALL'
-    ? `⚠ D1/D7/D30 chưa có data theo vertical — đang hiển thị All CT`
-    : '';
-  makeChart('chartCohortNURR',{type:'line',data:{
-    labels:MONTHS.slice(0,ACT),
-    datasets:[
-      {label:'D1 (%)', data:d.nurr_d1.slice(0,ACT),borderColor:'#E91E63',borderWidth:2,pointRadius:3,tension:.3},
-      {label:'D7 (%)', data:d.nurr_d7.slice(0,ACT),borderColor:'#FF6B35',borderWidth:2,pointRadius:3,tension:.3},
-      {label:'D30 / M1 (%)',data:d.nurr_m1.slice(0,ACT).map(v=>v||null),borderColor:'#2196F3',borderWidth:2,pointRadius:3,tension:.3},
-    ]
-  },options:lineOpts(true)});
 
   document.getElementById('cohort-table-title').textContent =
     `Cohort Retention — ${cohortVert==='ALL'?'All Chợ Tốt':cohortVert}`;
@@ -2933,39 +2913,52 @@ function mbrPct(mk,v) {
 function renderMBRTable() {
   const tbl=document.getElementById('mbr-table'); if(!tbl) return;
   const vCols=MBR_VERTS;
-  const thB='font:700 10px/1 var(--font-ui);padding:5px 8px;white-space:nowrap;border-bottom:2px solid var(--border);text-align:center';
-  let h=`<thead><tr style="background:var(--surface-2)">
-    <th style="${thB};text-align:left;min-width:90px;border-right:1px solid var(--border)">Section</th>
-    <th style="${thB};text-align:left;min-width:150px">Metric</th>`;
+  // table-layout:fixed — section 7%, metric 15%, each of 10 input cols 7.8%
+  const colW={sec:'7%',metric:'15%',inp:'7.8%'};
+  const thB='font:600 10px/1 var(--font-ui);padding:4px 6px;border-bottom:2px solid var(--border);text-align:center;overflow:hidden;white-space:nowrap';
+  let h=`<colgroup>
+    <col style="width:${colW.sec}">
+    <col style="width:${colW.metric}">
+    ${vCols.map(()=>`<col style="width:${colW.inp}"><col style="width:${colW.inp}">`).join('')}
+  </colgroup>
+  <thead><tr style="background:var(--surface-2)">
+    <th style="${thB};text-align:left;border-right:1px solid var(--border)">Section</th>
+    <th style="${thB};text-align:left">Metric</th>`;
   vCols.forEach(v=>{
     const clr=MBR_VCOLS[v];
-    h+=`<th colspan="2" style="${thB};color:${clr};border-left:2px solid ${clr}44">${v}</th>`;
+    h+=`<th colspan="2" style="${thB};color:${clr};border-left:2px solid ${clr}55">${v}</th>`;
   });
   h+=`</tr><tr style="background:var(--surface-2)">
     <th style="border-right:1px solid var(--border)"></th><th></th>`;
   vCols.forEach(()=>{
-    h+=`<th style="${thB};font-weight:400;color:var(--text-faint)">Target/LM</th><th style="${thB};font-weight:400;color:var(--text-faint)">Actual</th>`;
+    h+=`<th style="${thB};font-weight:400;color:var(--text-faint);font-size:9px">Target</th>
+        <th style="${thB};font-weight:400;color:var(--text-faint);font-size:9px">Actual</th>`;
   });
   h+=`</tr></thead><tbody>`;
   const sections=[...new Set(MBR_METRICS.map(m=>m.s))];
+  // Strip emoji from section labels for compactness
+  const secLabel=s=>s.replace(/^\S+\s/,'');
   sections.forEach((sec,si)=>{
     const metrics=MBR_METRICS.filter(m=>m.s===sec);
     metrics.forEach((m,mi)=>{
       const topBorder=si>0&&mi===0?'border-top:2px solid var(--border);':'';
-      const bg=si%2===0?'':'background:rgba(0,0,0,.02)';
+      const bg=si%2===0?'':'background:rgba(0,0,0,.025)';
       h+=`<tr style="${bg}">`;
-      if(mi===0) h+=`<td rowspan="${metrics.length}" style="font:600 10px/1.4 var(--font-ui);padding:4px 8px;color:var(--navy-60);border-right:1px solid var(--border);vertical-align:middle;white-space:nowrap;${topBorder}">${sec}</td>`;
-      h+=`<td style="font:500 10px/1.4 var(--font-ui);padding:3px 8px;color:var(--text-light);white-space:nowrap;${mi===0?topBorder:''}">${m.label}</td>`;
+      if(mi===0) h+=`<td rowspan="${metrics.length}" style="font:600 10px/1.3 var(--font-ui);padding:3px 5px;color:var(--navy-60);border-right:1px solid var(--border);vertical-align:middle;text-align:left;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;${topBorder}">${secLabel(sec)}</td>`;
+      h+=`<td style="font:400 10px/1.3 var(--font-ui);padding:3px 5px;color:var(--navy-60);overflow:hidden;white-space:nowrap;text-overflow:ellipsis;${mi===0?topBorder:''}" title="${m.label}">${m.label}</td>`;
       vCols.forEach(v=>{
         const clr=MBR_VCOLS[v];
-        const inSt=`width:70px;border:none;background:transparent;font:400 10px/1.4 var(--font-mono);padding:3px 6px;text-align:right;outline:none;color:`;
-        h+=`<td style="border-left:2px solid ${clr}33;padding:0"><input data-mk="${m.key}" data-v="${v}" data-f="target" type="text" value="${mbrGet(m.key,v,'target')}" onchange="mbrEdit(this)" style="${inSt}var(--text-light)" placeholder="—"></td>`;
-        h+=`<td style="padding:0"><input data-mk="${m.key}" data-v="${v}" data-f="actual" type="text" value="${mbrGet(m.key,v,'actual')}" onchange="mbrEdit(this)" style="${inSt}var(--text)" placeholder="—"></td>`;
+        const inSt=`width:100%;box-sizing:border-box;border:none;background:transparent;font:400 10px/1.3 var(--font-mono);padding:2px 4px;text-align:right;outline:none;`;
+        h+=`<td style="border-left:2px solid ${clr}33;padding:0;overflow:hidden"><input data-mk="${m.key}" data-v="${v}" data-f="target" type="text" value="${mbrGet(m.key,v,'target')}" onchange="mbrEdit(this)" style="${inSt}color:var(--navy-60)" placeholder="—"></td>`;
+        h+=`<td style="padding:0;overflow:hidden"><input data-mk="${m.key}" data-v="${v}" data-f="actual" type="text" value="${mbrGet(m.key,v,'actual')}" onchange="mbrEdit(this)" style="${inSt}color:var(--text)" placeholder="—"></td>`;
       });
       h+=`</tr>`;
     });
   });
   h+=`</tbody>`;
+  tbl.style.tableLayout='fixed';
+  tbl.style.width='100%';
+  tbl.style.borderCollapse='collapse';
   tbl.innerHTML=h;
 }
 
