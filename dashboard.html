@@ -109,11 +109,11 @@ body{font-family:var(--font-ui);background:var(--bg);color:var(--text);font-size
 .section-label::before{content:'';display:block;width:4px;height:20px;background:var(--accent);border-radius:2px;flex-shrink:0}
 
 /* ── Tables ─────────────────────────────────────── */
-.dt{width:100%;border-collapse:collapse;font:400 11px/1.5 var(--font-ui);color:var(--navy-60)}
-.dt thead th{padding:8px 10px;text-align:left;font:600 11px/1 var(--font-ui);color:var(--text-light);letter-spacing:.05em;text-transform:uppercase;border-bottom:1px solid var(--border);background:var(--surface-2);white-space:nowrap}
+.dt{width:100%;border-collapse:collapse;font:400 12px/1.4 var(--font-ui);color:var(--navy-60)}
+.dt thead th{padding:6px 7px;text-align:left;font:600 10.5px/1 var(--font-ui);color:var(--text-light);letter-spacing:.06em;text-transform:uppercase;border-bottom:2px solid var(--border);background:var(--surface-2);white-space:nowrap}
 .dt thead th.r{text-align:right}
-.dt tbody td{padding:8px 10px;border-bottom:1px solid var(--border-light);color:var(--navy-60);vertical-align:middle}
-.dt tbody td.mono{font-family:var(--font-mono);font-size:11px;font-weight:400;color:var(--navy-60);text-align:right}
+.dt tbody td{padding:5px 7px;border-bottom:1px solid var(--border-light);color:var(--navy-60);vertical-align:middle}
+.dt tbody td.mono{font-family:var(--font-mono);font-size:12px;font-weight:400;color:var(--navy-60);text-align:right}
 .dt tbody tr:last-child td{border-bottom:none}
 .dt tbody tr:hover td{background:var(--surface-2)}
 .dt tbody td:first-child{font-weight:600;color:var(--text)}
@@ -1304,8 +1304,8 @@ function renderPL() {
   const showVerts = plVert==='ALL' ? ['ALL',...VERTS4] : [plVert];
   const VERT_CLR = {ALL:C.all,PTY:C.pty,JOB:C.job,VEH:C.veh,GDS:C.gds};
   gridEl.style.gridTemplateColumns = '1fr';
-  const thT = 'padding:6px 10px;font:600 11px/1 var(--font-ui);color:var(--text-light);white-space:nowrap;border-bottom:2px solid var(--border)';
-  const tdT = 'text-align:right;font:400 11px/1.5 var(--font-mono);color:var(--navy-60);padding:4px 10px;white-space:nowrap';
+  const thT = 'padding:6px 7px;font:600 10.5px/1 var(--font-ui);color:var(--text-light);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap;border-bottom:2px solid var(--border);background:var(--surface-2)';
+  const tdT = 'text-align:right;font:400 12px/1.4 var(--font-mono);color:var(--navy-60);padding:5px 7px;white-space:nowrap;border-bottom:1px solid var(--border-light)';
   let tbl = `<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse">
     <thead><tr style="background:var(--surface-2)">
       <th style="${thT};text-align:left;min-width:55px">Vertical</th>
@@ -2471,12 +2471,12 @@ function renderMktDetail(key) {
   const rows=sec.labels.map((label,mi)=>{
     const isOut=sec.isOutput[mi], hb=(sec.higherBetter||[])[mi]!==false;
     const cells=VERTS.map(v=>{const vd=sec.data[v],a=_mktGetV(vd,mi,mo),t=_mktGetT(vd,mi,mo),p=_pa(a,t,hb);
-      return `<td style="text-align:right;padding:3px 8px;white-space:nowrap"><span style="font:600 10px/1 var(--font-ui)">${fmtNum(a)}</span>${t!=null?`<span style="font:400 9px/1 var(--font-ui);color:var(--text-faint)"> / ${fmtNum(t)}</span>`:''} ${p!=null?_pbadge(p):''}</td>`;
+      return `<td style="text-align:right;padding:4px 7px;white-space:nowrap"><span style="font:600 12px/1 var(--font-ui)">${fmtNum(a)}</span>${t!=null?`<span style="font:400 10px/1 var(--font-ui);color:var(--text-faint)"> / ${fmtNum(t)}</span>`:''} ${p!=null?_pbadge(p):''}</td>`;
     }).join('');
-    return `<tr style="${isOut?'background:var(--accent-light)':''}"><td style="padding:3px 8px;font:${isOut?'600':'400'} 10px/1.4 var(--font-ui);color:${isOut?'var(--accent)':'var(--text-light)'};white-space:nowrap">${isOut?'▸ ':''}${label}</td>${cells}</tr>`;
+    return `<tr style="${isOut?'background:var(--accent-light)':''}"><td style="padding:4px 7px;font:${isOut?'600':'400'} 12px/1.4 var(--font-ui);color:${isOut?'var(--accent)':'var(--text-light)'};white-space:nowrap">${isOut?'▸ ':''}${label}</td>${cells}</tr>`;
   }).join('');
   el.innerHTML=`<div class="chart-title mb-4">Detail — ${MONTHS[mo]} 2026 Actual vs Target</div>
-    <div style="overflow-x:auto"><table class="dt" style="font-size:10px"><thead><tr><th>Metric</th>${VERTS.map(v=>`<th class="r" style="color:${VC[v]}">${v}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div>`;
+    <div style="overflow-x:auto"><table class="dt"><thead><tr><th>Metric</th>${VERTS.map(v=>`<th class="r" style="color:${VC[v]}">${v}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div>`;
 }
 
 function renderMktPivot(key) {
@@ -2487,57 +2487,61 @@ function renderMktPivot(key) {
   const rows=sec.labels.map((label,mi)=>{
     const isOut=sec.isOutput[mi];
     const cells=MONTHS.slice(0,ACT).map((_,mo)=>{const a=_mktGetV(vd,mi,mo),t=_mktGetT(vd,mi,mo);
-      return `<td style="text-align:right;padding:3px 8px;white-space:nowrap"><span style="font:${a!=null?'600':'400'} 10px/1 var(--font-ui);color:${a!=null?'var(--text)':'var(--text-faint)'}">${fmtNum(a)}</span>${t!=null?`<span style="font:400 9px/1 var(--font-ui);color:var(--text-faint)"> / ${fmtNum(t)}</span>`:''}</td>`;
+      return `<td style="text-align:right;padding:4px 7px;white-space:nowrap"><span style="font:${a!=null?'600':'400'} 12px/1 var(--font-ui);color:${a!=null?'var(--text)':'var(--text-faint)'}">${fmtNum(a)}</span>${t!=null?`<span style="font:400 10px/1 var(--font-ui);color:var(--text-faint)"> / ${fmtNum(t)}</span>`:''}</td>`;
     }).join('');
-    return `<tr style="${isOut?'background:var(--accent-light)':''}"><td style="padding:3px 8px;font:${isOut?'600':'400'} 10px/1.4 var(--font-ui);color:${isOut?'var(--accent)':'var(--text-light)'};white-space:nowrap">${isOut?'▸ ':''}${label}</td>${cells}</tr>`;
+    return `<tr style="${isOut?'background:var(--accent-light)':''}"><td style="padding:4px 7px;font:${isOut?'600':'400'} 12px/1.4 var(--font-ui);color:${isOut?'var(--accent)':'var(--text-light)'};white-space:nowrap">${isOut?'▸ ':''}${label}</td>${cells}</tr>`;
   }).join('');
-  el.innerHTML=`<div style="font:400 10.5px/1.4 var(--font-ui);color:var(--navy-60);margin-bottom:6px">Vertical: <strong style="color:${VC[vert]}">${vert}</strong> · Actual / Target</div>
-    <div style="overflow-x:auto"><table class="dt" style="font-size:10px"><thead><tr><th style="text-align:left;white-space:nowrap">Metric</th>${MONTHS.slice(0,ACT).map(m=>`<th class="r">${m}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div>`;
+  el.innerHTML=`<div style="font:400 12px/1.4 var(--font-ui);color:var(--navy-60);margin-bottom:6px">Vertical: <strong style="color:${VC[vert]}">${vert}</strong> · Actual / Target</div>
+    <div style="overflow-x:auto"><table class="dt"><thead><tr><th style="text-align:left;white-space:nowrap">Metric</th>${MONTHS.slice(0,ACT).map(m=>`<th class="r">${m}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div>`;
 }
 
-// ── Overall Achievement Funnel (re-renders on month change) ─────────────
+// ── Overall Achievement Funnel — reads from mbrData ──────────────────────
 function renderOAFunnel() {
   const el=document.getElementById('oa-funnel-content'); if(!el) return;
   const VERTS=['PTY','JOB','VEH','GDS'], VC={PTY:'var(--pty)',JOB:'var(--job)',VEH:'var(--veh)',GDS:'var(--gds)'};
-  const miniTable=(key)=>{
-    const sec=MKT_PERF[key];
-    const out=sec.labels.map((l,i)=>({l,i})).filter(({i})=>sec.isOutput[i]);
-    if(!out.length) return '';
-    const rows=out.map(({l,i:mi})=>{
-      const hb=(sec.higherBetter||[])[mi]!==false;
-      const cells=VERTS.map(v=>{const vd=sec.data[v],a=_mktGetV(vd,mi,oaMonth),t=_mktGetT(vd,mi,oaMonth),p=_pa(a,t,hb);
-        if(p==null) return `<td style="text-align:center;padding:2px 3px;color:var(--text-faint);font:400 9px/1 var(--font-ui)">—</td>`;
+  const mo=MONTHS[oaMonth];
+  const miniTableMBR=(metrics)=>{
+    const hasData=metrics.some(m=>VERTS.some(v=>{const a=mbrData[mo]?.[m.key]?.[v]?.actual; return a!=null&&a!==''}));
+    if(!hasData) return `<div style="color:var(--text-faint);font:400 10px/1.4 var(--font-ui);margin-top:8px;font-style:italic">Chưa có data — paste từ tab Data Input</div>`;
+    const rows=metrics.map(m=>{
+      const cells=VERTS.map(v=>{
+        const t=parseFloat(mbrData[mo]?.[m.key]?.[v]?.target);
+        const a=parseFloat(mbrData[mo]?.[m.key]?.[v]?.actual);
+        if(isNaN(t)||isNaN(a)||t===0) return `<td style="text-align:center;padding:2px 3px;color:var(--text-faint);font:400 10px/1 var(--font-ui)">—</td>`;
+        const p=m.lowerBetter?(2-a/t)*100:a/t*100;
         const bg=p>=100?'var(--green-bg)':p>=80?'var(--orange-bg)':'var(--red-bg)';
         const fg=p>=100?'#00843D':p>=80?'var(--orange)':'var(--red)';
-        return `<td style="text-align:center;padding:2px 3px"><span style="padding:1px 5px;border-radius:3px;font:700 9px/1.5 var(--font-ui);background:${bg};color:${fg}">${Math.round(p)}%</span></td>`;
+        return `<td style="text-align:center;padding:2px 3px"><span style="padding:1px 5px;border-radius:3px;font:700 10px/1.5 var(--font-ui);background:${bg};color:${fg}">${Math.round(p)}%</span></td>`;
       }).join('');
-      return `<tr><td style="font:400 9px/1.4 var(--font-ui);padding:2px 6px 2px 0;white-space:nowrap;color:inherit">${l}</td>${cells}</tr>`;
+      return `<tr><td style="font:400 10px/1.4 var(--font-ui);padding:2px 6px 2px 0;white-space:nowrap;color:inherit">${m.label}</td>${cells}</tr>`;
     }).join('');
-    return `<div style="margin-top:10px;overflow-x:auto"><table style="border-collapse:collapse;font-size:9px;width:100%"><thead><tr>
-      <th style="text-align:left;font:600 9px/1 var(--font-ui);padding:2px 6px 2px 0;opacity:.7">Output metric</th>
-      ${VERTS.map(v=>`<th style="text-align:center;font:700 9px/1 var(--font-ui);color:${VC[v]};padding:2px 4px">${v}</th>`).join('')}
+    return `<div style="margin-top:10px;overflow-x:auto"><table style="border-collapse:collapse;width:100%"><thead><tr>
+      <th style="text-align:left;font:600 10px/1 var(--font-ui);padding:2px 6px 2px 0;opacity:.7;text-transform:uppercase;letter-spacing:.05em">Metric</th>
+      ${VERTS.map(v=>`<th style="text-align:center;font:700 10px/1 var(--font-ui);color:${VC[v]};padding:2px 4px">${v}</th>`).join('')}
     </tr></thead><tbody>${rows}</tbody></table></div>`;
   };
+  const brd=MBR_METRICS.filter(m=>m.s==='📣 Branding');
+  const dd=MBR_METRICS.filter(m=>m.s==='📍 Digital Demand');
+  const ag=MBR_METRICS.filter(m=>m.s==='📱 App Growth');
   el.innerHTML=`
     <div style="background:var(--pty-bg);border:2.5px solid var(--pty);border-radius:10px;padding:14px 20px">
-      <div style="font:700 13px/1 var(--font-ui);color:var(--pty);margin-bottom:2px">🎨 Branding</div>
-      <div style="font:400 10px/1.4 var(--font-ui);color:var(--text-light)">Brand reach · Brand keywords · Content · Social followers</div>
-      ${miniTable('branding')}
+      <div style="font:700 13px/1 var(--font-ui);color:var(--pty);margin-bottom:2px">📣 Branding</div>
+      <div style="font:400 10px/1.4 var(--font-ui);color:var(--text-light)">Brand Searches · Brand CPP · Brand Impressions</div>
+      ${miniTableMBR(brd)}
     </div>
-    <!-- T-connector: center stem → horizontal bar → two legs -->
     <div style="height:14px;display:flex;justify-content:center"><div style="width:3px;background:var(--pty)"></div></div>
     <div style="height:3px;background:var(--pty);margin:0 25%"></div>
     <div style="height:18px;display:flex;justify-content:space-between;margin:0 25%"><div style="width:3px;background:var(--pty)"></div><div style="width:3px;background:var(--pty)"></div></div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
       <div style="background:var(--veh-bg);border:2.5px solid var(--veh);border-radius:10px;padding:14px 20px">
-        <div style="font:700 13px/1 var(--font-ui);color:var(--veh);margin-bottom:2px">📣 Digital Demand</div>
-        <div style="font:400 10px/1.4 var(--font-ui);color:var(--text-light)">DAU · DwL · Lead · Cost per unit</div>
-        ${miniTable('digital_demand')}
+        <div style="font:700 13px/1 var(--font-ui);color:var(--veh);margin-bottom:2px">📍 Digital Demand</div>
+        <div style="font:400 10px/1.4 var(--font-ui);color:var(--text-light)">Leads · CPL · Contact Rate · CAC Digital</div>
+        ${miniTableMBR(dd)}
       </div>
       <div style="background:var(--purple-bg);border:2.5px solid var(--purple);border-radius:10px;padding:14px 20px">
         <div style="font:700 13px/1 var(--font-ui);color:var(--purple);margin-bottom:2px">📱 App Growth</div>
-        <div style="font:400 10px/1.4 var(--font-ui);color:var(--text-light)">App installs · Activated users · D1 RR</div>
-        ${miniTable('app_growth')}
+        <div style="font:400 10px/1.4 var(--font-ui);color:var(--text-light)">DAU · MAU · New Users · NURR D1/D7/M1</div>
+        ${miniTableMBR(ag)}
       </div>
     </div>`;
 }
@@ -2860,7 +2864,7 @@ function loadSavedActRows() {
 document.addEventListener('DOMContentLoaded', () => { loadSavedActRows(); loadMBRData(); loadData(); });
 
 // ── MBR — Monthly Business Review ────────────────────────────────────
-const MBR_VERTS = ['PTY','JOB','VEH','GDS','ALL'];
+const MBR_VERTS = ['PTY','JOB','VEH','GDS'];
 const MBR_VCOLS = {PTY:C.pty,JOB:C.job,VEH:C.veh,GDS:C.gds,ALL:C.all};
 const MBR_METRICS = [
   {s:'📣 Branding',        key:'brand_searches', label:'Brand Searches (K)'},
@@ -2915,7 +2919,7 @@ function renderMBRTable() {
   const vCols=MBR_VERTS;
   // table-layout:fixed — section 7%, metric 15%, each of 10 input cols 7.8%
   const colW={sec:'7%',metric:'15%',inp:'7.8%'};
-  const thB='font:600 10px/1 var(--font-ui);padding:4px 6px;border-bottom:2px solid var(--border);text-align:center;overflow:hidden;white-space:nowrap';
+  const thB='font:600 10.5px/1 var(--font-ui);letter-spacing:.06em;text-transform:uppercase;padding:5px 6px;border-bottom:2px solid var(--border);background:var(--surface-2);text-align:center;overflow:hidden;white-space:nowrap';
   let h=`<colgroup>
     <col style="width:${colW.sec}">
     <col style="width:${colW.metric}">
@@ -2948,7 +2952,7 @@ function renderMBRTable() {
       h+=`<td style="font:400 10px/1.3 var(--font-ui);padding:3px 5px;color:var(--navy-60);overflow:hidden;white-space:nowrap;text-overflow:ellipsis;${mi===0?topBorder:''}" title="${m.label}">${m.label}</td>`;
       vCols.forEach(v=>{
         const clr=MBR_VCOLS[v];
-        const inSt=`width:100%;box-sizing:border-box;border:none;background:transparent;font:400 10px/1.3 var(--font-mono);padding:2px 4px;text-align:right;outline:none;`;
+        const inSt=`width:100%;box-sizing:border-box;border:none;background:transparent;font:400 12px/1.4 var(--font-mono);padding:3px 5px;text-align:right;outline:none;`;
         h+=`<td style="border-left:2px solid ${clr}33;padding:0;overflow:hidden"><input data-mk="${m.key}" data-v="${v}" data-f="target" type="text" value="${mbrGet(m.key,v,'target')}" onchange="mbrEdit(this)" onpaste="handleMBRPaste(event)" style="${inSt}color:var(--navy-60)" placeholder="—"></td>`;
         h+=`<td style="padding:0;overflow:hidden"><input data-mk="${m.key}" data-v="${v}" data-f="actual" type="text" value="${mbrGet(m.key,v,'actual')}" onchange="mbrEdit(this)" onpaste="handleMBRPaste(event)" style="${inSt}color:var(--text)" placeholder="—"></td>`;
       });
@@ -3018,9 +3022,8 @@ function mbrEdit(inp) {
   if(!mbrData[mbrMonth][mk]) mbrData[mbrMonth][mk]={};
   if(!mbrData[mbrMonth][mk][v]) mbrData[mbrMonth][mk][v]={};
   mbrData[mbrMonth][mk][v][f]=inp.value;
-  // Refresh pct badge in same row
-  const td=inp.closest('tr');
-  if(td) renderMBRTable();
+  localStorage.setItem('ct_mbr_data', JSON.stringify(mbrData));
+  renderMBRTable();
 }
 
 function saveMBRData() {
