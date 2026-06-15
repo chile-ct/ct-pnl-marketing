@@ -886,6 +886,24 @@ body{font-family:var(--font-ui);background:var(--bg);color:var(--text);font-size
       <span id="act-save-msg" style="font:400 11.5px/1 var(--font-ui);color:var(--green)"></span>
     </div>
   </div>
+
+  <!-- MBR Section -->
+  <div style="margin:32px 0 0">
+    <div class="section-label">📊 MBR — Monthly Business Review</div>
+    <div class="paste-tip">💡 Chọn tháng → nhập hoặc paste trực tiếp từ Google Sheets (cột Target/LM rồi Actual cho từng vertical) → <strong>Lưu</strong>.</div>
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:14px;flex-wrap:wrap">
+      <span style="font:600 11px/1 var(--font-ui);color:var(--text-light)">Tháng:</span>
+      <div id="mbr-month-filter" style="display:flex;gap:6px;flex-wrap:wrap"></div>
+    </div>
+    <div style="overflow-x:auto;border-radius:10px;border:1px solid var(--border);background:var(--surface)">
+      <table class="itable" id="mbr-table" style="min-width:1100px"></table>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:10px;align-items:center;flex-wrap:wrap">
+      <button onclick="saveMBRData()" style="background:var(--accent);color:#fff;border:none;border-radius:7px;padding:7px 18px;font:600 12px/1 var(--font-ui);cursor:pointer">💾 Lưu</button>
+      <button onclick="resetMBRData()" style="background:var(--surface);color:var(--text-light);border:1px solid var(--border);border-radius:7px;padding:7px 14px;font:500 12px/1 var(--font-ui);cursor:pointer">↺ Reset tháng này</button>
+      <span id="mbr-save-msg" style="font:400 11.5px/1 var(--font-ui);color:var(--green)"></span>
+    </div>
+  </div>
 </div>
 
 <!-- ── Spider Chart Modal ─────────────────────────── -->
@@ -1294,51 +1312,48 @@ function renderPL() {
     }
   });
 
-  // P&L detail grid per vertical
+  // P&L detail — unified single table, grouped by vertical
   const gridEl = document.getElementById('pl-detail-grid');
   const showVerts = plVert==='ALL' ? ['ALL',...VERTS4] : [plVert];
   const VERT_CLR = {ALL:C.all,PTY:C.pty,JOB:C.job,VEH:C.veh,GDS:C.gds};
-  gridEl.style.gridTemplateColumns = showVerts.length===5 ? 'repeat(5,minmax(190px,1fr))' : '1fr';
-  gridEl.innerHTML = showVerts.map(v=>{
+  gridEl.style.gridTemplateColumns = '1fr';
+  function momCell2(cur,prev) {
+    const p = prev>0 ? (cur-prev)/prev*100 : null;
+    if(p==null) return '';
+    const w = Math.abs(p)>=5 ? 'font-weight:700;' : '';
+    return `<span style="${w}color:${p>=0?'#00843D':'#C62828'}">${p>=0?'+':''}${p.toFixed(1)}%</span>`;
+  }
+  const thSt = 'padding:5px 8px;font:600 10px/1 var(--font-ui);color:var(--navy-60);white-space:nowrap;border-bottom:2px solid var(--border)';
+  const tdSt = (align='right',extra='') => `text-align:${align};font:400 10px/1.4 var(--font-ui);padding:3px 8px;white-space:nowrap;${extra}`;
+  let tbl = `<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:10px">
+    <thead><tr style="background:var(--surface-2)">
+      <th style="${thSt};text-align:left">Vertical</th>
+      <th style="${thSt};text-align:left">Month</th>
+      <th style="${thSt}">Revenue</th>
+      <th style="${thSt}">Spend</th>
+      <th style="${thSt}">MER</th>
+      <th style="${thSt}">Rev MoM</th>
+    </tr></thead><tbody>`;
+  showVerts.forEach((v,vi)=>{
     const rArr = v==='ALL' ? months.map((_,i)=>totalRevM(i)) : revArr(v);
     const sArr = v==='ALL' ? months.map((_,i)=>totalSpendM(i)) : spendArr(v);
-    const clr  = VERT_CLR[v]||C.all;
-    function momPct(a,b) { return b>0 ? (a-b)/b*100 : null; }
-    function momCell(v,prev) {
-      const p = momPct(v,prev);
-      if(p==null) return '';
-      const flag = Math.abs(p)>=5 ? ' style="font-weight:700"' : '';
-      return `<span${flag} style="font-size:10px;color:${p>=0?'#00843D':'#C62828'}">${p>=0?'+':''}${p.toFixed(1)}%</span>`;
-    }
-    const rows2 = rArr.map((r,i)=>{
-      const s=sArr[i], mer2=s>0?r/s:0, romi2=s>0?(r-s)/s:0;
-      return `<tr>
-        <td style="font:600 10px/1.3 var(--font-ui);padding:3px 6px">${months[i]}</td>
-        <td style="text-align:right;font:500 10px/1.3 var(--font-ui);padding:3px 6px;white-space:nowrap">${r.toFixed(2)}B</td>
-        <td style="text-align:right;font:400 10px/1.3 var(--font-ui);padding:3px 6px;white-space:nowrap">${s.toFixed(3)}B</td>
-        <td style="text-align:right;font:600 10px/1.3 var(--font-ui);padding:3px 6px;color:${mer2>=10?'#00843D':C.navy}">${f1(mer2)}×</td>
-        <td style="text-align:right;font:400 9px/1.4 var(--font-ui);padding:3px 6px">
-          ${i>0?momCell(r,rArr[i-1]):''}
-        </td>
+    const clr = VERT_CLR[v]||C.all;
+    rArr.forEach((r,i)=>{
+      const s=sArr[i], mer2=s>0?r/s:0;
+      const bg = vi%2===0?'':'background:var(--surface-2)';
+      tbl += `<tr style="${bg}">
+        ${i===0?`<td rowspan="${rArr.length}" style="font:700 10px/1.4 var(--font-ui);padding:4px 8px;color:${clr};border-right:2px solid ${clr}33;vertical-align:middle;text-align:center">${v}</td>`:''}
+        <td style="${tdSt('left')}font-weight:600">${months[i]}</td>
+        <td style="${tdSt()}">${r.toFixed(2)}B</td>
+        <td style="${tdSt()}">${s.toFixed(3)}B</td>
+        <td style="${tdSt()}color:${mer2>=10?'#00843D':C.navy};font-weight:600">${f1(mer2)}×</td>
+        <td style="${tdSt()}">${i>0?momCell2(r,rArr[i-1]):''}</td>
       </tr>`;
-    }).join('');
-    return `<div style="border-radius:8px;overflow:hidden;border:1.5px solid ${clr}22">
-      <div style="background:${clr};padding:6px 10px;display:flex;justify-content:space-between;align-items:center">
-        <span style="font:700 11px/1 var(--font-ui);color:#fff">${v}</span>
-        <span style="font:600 10px/1 var(--font-ui);color:rgba(255,255,255,.8)">${rArr.reduce((a,b)=>a+b,0).toFixed(2)}B</span>
-      </div>
-      <table style="width:100%;border-collapse:collapse;font-size:11px">
-        <thead><tr style="background:${clr}11">
-          <th style="padding:4px 8px;text-align:left;font:600 10px/1 var(--font-ui);color:var(--navy-60)">Mo</th>
-          <th style="padding:4px 8px;text-align:right;font:600 10px/1 var(--font-ui);color:var(--navy-60)">Rev</th>
-          <th style="padding:4px 8px;text-align:right;font:600 10px/1 var(--font-ui);color:var(--navy-60)">Spend</th>
-          <th style="padding:4px 8px;text-align:right;font:600 10px/1 var(--font-ui);color:var(--navy-60)">MER</th>
-          <th style="padding:4px 8px;text-align:right;font:600 10px/1 var(--font-ui);color:var(--navy-60)">MoM</th>
-        </tr></thead>
-        <tbody>${rows2}</tbody>
-      </table>
-    </div>`;
-  }).join('');
+    });
+    if(vi<showVerts.length-1) tbl+=`<tr><td colspan="6" style="height:4px;background:var(--border)"></td></tr>`;
+  });
+  tbl += '</tbody></table></div>';
+  gridEl.innerHTML = tbl;
 }
 
 // ── Budget Pacing rendering ───────────────────────────────────────────
@@ -1602,6 +1617,11 @@ function renderBudgetPacing() {
       );
       return rows.reduce((s, r) => s + r.months.slice(0, ACT).reduce((a, b) => a + b, 0), 0) / 1e6;
     });
+    // If no rows matched TRACKS (e.g. template objectives like 'Demand'/'Supply'), fall back to HC_DATA
+    if (trackAmts.every(v => v === 0)) {
+      const filtHC = budgetVert === 'ALL' ? HC_DATA : HC_DATA.filter(r => r[2] === budgetVert || r[2] === 'ALL');
+      trackAmts = TRACKS.map(t => filtHC.filter(r=>r[1]===t).reduce((s,r)=>s+r[4],0));
+    }
   } else {
     const filtHC = budgetVert === 'ALL' ? HC_DATA : HC_DATA.filter(r => r[2] === budgetVert || r[2] === 'ALL');
     trackAmts = TRACKS.map(t => filtHC.filter(r=>r[1]===t).reduce((s,r)=>s+r[4],0));
@@ -1773,6 +1793,8 @@ function renderUE2() {
   document.getElementById('kpi-ltvcac-flag').style.color = lvc!=null&&lvc>=3 ? '#00843D' : C.red;
   document.getElementById('kpi-ltvcac-card').style.background = lvc!=null&&lvc<3 ? 'var(--red-bg)' : '';
 
+  const overall = { lvc:overallLvc, vpl, ltv, cac };
+
   // Per-vertical MoM badges
   function momDelta2(a,b) { return (a!=null&&b!=null&&b!==0)?(a-b)/b*100:null; }
   function vertMomBadges(key) {
@@ -1789,8 +1811,8 @@ function renderUE2() {
   document.getElementById('ue-vpl-mom').innerHTML    = vertMomBadges('vpl');
 
   // Detail table: rows = metric×vertical, cols = months
-  const dtEl = document.getElementById('ue-detail-table'); if(!dtEl) return;
-  const METRICS = [
+  const dtEl = document.getElementById('ue-detail-table');
+  if(dtEl) { const METRICS = [
     {key:'ltv', label:'LTV (Mđ)', fmt:v=>v!=null?f1(v):'—'},
     {key:'cac', label:'CAC (Kđ)', fmt:v=>v!=null?f1(v):'—'},
     {key:'lvc', label:'LTV/CAC', fmt:v=>v!=null?f2(v)+'×':'—'},
@@ -1818,6 +1840,7 @@ function renderUE2() {
   });
   dtHtml += '</tbody></table>';
   dtEl.innerHTML = dtHtml;
+  } // end if(dtEl)
 
   const multiLine = () => ({
     responsive:true,maintainAspectRatio:false,
@@ -1825,10 +1848,6 @@ function renderUE2() {
     plugins:{legend:{display:false}},
     scales:{x:{grid:{display:false}},y:{beginAtZero:true,grid:{color:'#E8EDEF'},ticks:{font:{size:11,family:"'Inter',-apple-system,sans-serif"}}}}
   });
-
-  const overall = {
-    lvc:overallLvc, vpl, ltv, cac
-  };
 
   function buildDatasets(key, includeOverall=true) {
     const ds = VERTS4.map((v,i)=>{
@@ -2462,7 +2481,7 @@ function renderMktBars(key, type) {
       plugins:{legend:{display:false},
         tooltip:{callbacks:{label:ctx=>{const act=ctx.dataset.actualData?.[ctx.dataIndex];return act!=null?` ${ctx.dataset.label}: ${fmtNum(act)} (${Math.round(ctx.raw)}%)`:` ${ctx.dataset.label}: ${Math.round(ctx.raw)}%`;}}}},
       scales:{
-        x:{beginAtZero:true,max:140,grid:{display:false},ticks:{callback:v=>v+'%',font:{size:10}}},
+        x:{beginAtZero:true,max:Math.ceil(Math.max(140,...datasets.flatMap(d=>d.data).filter(v=>v!=null))/50)*50,grid:{display:false},ticks:{callback:v=>v+'%',font:{size:10}}},
         y:{grid:{display:false},ticks:{font:{size:10},maxRotation:0}},
       }}}));
 }
@@ -2634,6 +2653,7 @@ function initEditCost() {
 }
 
 function fmtVND(n){if(!n||n===0)return '';return Math.round(n).toLocaleString('en-US');}
+function fmtVNDm(n){if(!n||n===0)return '';const m=n/1e6;return m>=1?m.toFixed(1)+'M':Math.round(n/1e3)+'K';}
 function renderCostTable() {
   if (!editCost) initEditCost();
   const tbody = document.getElementById('cost-tbody');
@@ -2643,13 +2663,13 @@ function renderCostTable() {
     const clr = COST_VERT_COLORS[v];
     html += `<tr>
       <td class="row-label" style="color:${clr}">${v}</td>
-      ${editCost[v].map((val)=>`<td style="color:var(--text);font-size:10px;white-space:nowrap">${fmtVND(val)}</td>`).join('')}
+      ${editCost[v].map((val)=>`<td style="color:var(--text);font-size:10px;white-space:nowrap">${fmtVNDm(val)}</td>`).join('')}
     </tr>`;
   });
   const totals = Array(12).fill(0).map((_,mi)=>COST_VERTS.reduce((s,v)=>(editCost[v][mi]||0)+s,0));
   html += `<tr>
     <td class="row-label total-row">TOTAL</td>
-    ${totals.map(t=>`<td class="total-row">${fmtVND(t)}</td>`).join('')}
+    ${totals.map(t=>`<td class="total-row">${fmtVNDm(t)}</td>`).join('')}
   </tr>`;
   tbody.innerHTML = html;
 }
@@ -2859,7 +2879,119 @@ function loadSavedActRows() {
     if (Array.isArray(parsed) && parsed.length > 0) { activityRows = parsed; }
   } catch(e) {}
 }
-document.addEventListener('DOMContentLoaded', () => { loadSavedActRows(); loadData(); });
+document.addEventListener('DOMContentLoaded', () => { loadSavedActRows(); loadMBRData(); loadData(); });
+
+// ── MBR — Monthly Business Review ────────────────────────────────────
+const MBR_VERTS = ['PTY','JOB','VEH','GDS','ALL'];
+const MBR_VCOLS = {PTY:C.pty,JOB:C.job,VEH:C.veh,GDS:C.gds,ALL:C.all};
+const MBR_METRICS = [
+  {s:'📣 Branding',        key:'brand_searches', label:'Brand Searches (K)'},
+  {s:'📣 Branding',        key:'brand_cpp',      label:'Brand CPP (Kđ)'},
+  {s:'📣 Branding',        key:'brand_imp',      label:'Brand Impressions (M)'},
+  {s:'📍 Digital Demand',  key:'leads',          label:'Leads (K)'},
+  {s:'📍 Digital Demand',  key:'cpl',            label:'CPL (Kđ)',            lowerBetter:true},
+  {s:'📍 Digital Demand',  key:'contact_rate',   label:'Contact Rate (%)'},
+  {s:'📍 Digital Demand',  key:'cac_digital',    label:'CAC Digital (Kđ)',    lowerBetter:true},
+  {s:'📱 App Growth',      key:'app_dau',        label:'App DAU (K)'},
+  {s:'📱 App Growth',      key:'app_mau',        label:'App MAU (K)'},
+  {s:'📱 App Growth',      key:'new_users',      label:'New Users (K)'},
+  {s:'📱 App Growth',      key:'nurr_d1',        label:'NURR D1 (%)'},
+  {s:'📱 App Growth',      key:'nurr_d7',        label:'NURR D7 (%)'},
+  {s:'📱 App Growth',      key:'nurr_m1',        label:'NURR M1 / D30 (%)'},
+];
+let mbrData = {};   // { 'Jan': { metricKey: { PTY:{target,actual}, ... } } }
+let mbrMonth = MONTHS[ACT-1];
+
+function loadMBRData() {
+  try { const s=localStorage.getItem('ct_mbr_data'); if(s) mbrData=JSON.parse(s); } catch(e) {}
+  renderMBRMonthFilter();
+  renderMBRTable();
+}
+
+function renderMBRMonthFilter() {
+  const el=document.getElementById('mbr-month-filter'); if(!el) return;
+  // Show all months + allow adding new ones
+  const months2=[...MONTHS];
+  el.innerHTML = months2.map(m=>`<span class="chip${m===mbrMonth?' active':''}" onclick="setMBRMonth('${m}')">${m}</span>`).join('');
+}
+
+function setMBRMonth(m) {
+  mbrMonth=m;
+  renderMBRMonthFilter();
+  renderMBRTable();
+}
+
+function mbrGet(mk,v,field) {
+  return mbrData[mbrMonth]?.[mk]?.[v]?.[field] ?? '';
+}
+
+function mbrPct(mk,v) {
+  const t=parseFloat(mbrGet(mk,v,'target')), a=parseFloat(mbrGet(mk,v,'actual'));
+  if(!t||isNaN(t)||isNaN(a)) return null;
+  const m=MBR_METRICS.find(x=>x.key===mk);
+  return m?.lowerBetter ? (2-a/t)*100 : a/t*100;
+}
+
+function renderMBRTable() {
+  const tbl=document.getElementById('mbr-table'); if(!tbl) return;
+  const vCols = MBR_VERTS;
+  const thB='font:700 10px/1 var(--font-ui);padding:5px 6px;white-space:nowrap;border-bottom:2px solid var(--border);text-align:center';
+  let h=`<thead><tr style="background:var(--surface-2)">
+    <th style="${thB};text-align:left;min-width:130px">Section / Metric</th>`;
+  vCols.forEach(v=>{
+    const clr=MBR_VCOLS[v];
+    h+=`<th colspan="3" style="${thB};color:${clr};border-left:2px solid ${clr}33">${v}</th>`;
+  });
+  h+=`</tr><tr style="background:var(--surface-2)"><th></th>`;
+  vCols.forEach(()=>{
+    h+=`<th style="${thB};color:var(--text-faint)">Target/LM</th><th style="${thB};color:var(--text-faint)">Actual</th><th style="${thB};color:var(--text-faint)">%</th>`;
+  });
+  h+=`</tr></thead><tbody>`;
+  let lastS='';
+  MBR_METRICS.forEach((m,mi)=>{
+    if(m.s!==lastS){
+      lastS=m.s;
+      h+=`<tr style="background:var(--navy-10)"><td colspan="${1+vCols.length*3}" style="font:700 11px/1.6 var(--font-ui);padding:5px 10px;color:var(--navy)">${m.s}</td></tr>`;
+    }
+    const bg=mi%2===0?'':'background:var(--surface-2)';
+    h+=`<tr style="${bg}"><td style="font:500 10px/1.4 var(--font-ui);padding:3px 10px;color:var(--text-light);white-space:nowrap">${m.label}</td>`;
+    vCols.forEach(v=>{
+      const clr=MBR_VCOLS[v];
+      const pct=mbrPct(m.key,v);
+      let badge='';
+      if(pct!=null){const bg2=pct>=100?'var(--green-bg)':pct>=80?'var(--orange-bg)':'var(--red-bg)';const fg=pct>=100?'#00843D':pct>=80?'var(--orange)':'var(--red)';badge=`<span style="padding:1px 4px;border-radius:3px;font:700 9px/1.4 var(--font-ui);background:${bg2};color:${fg}">${Math.round(pct)}%</span>`;}
+      h+=`<td style="border-left:2px solid ${clr}22;padding:0"><input data-mk="${m.key}" data-v="${v}" data-f="target" type="text" value="${mbrGet(m.key,v,'target')}" onchange="mbrEdit(this)" style="width:100%;border:none;background:transparent;font:400 10px/1.4 var(--font-mono);padding:3px 6px;color:var(--text-light);text-align:right;outline:none" placeholder="—"></td>`;
+      h+=`<td style="padding:0"><input data-mk="${m.key}" data-v="${v}" data-f="actual" type="text" value="${mbrGet(m.key,v,'actual')}" onchange="mbrEdit(this)" style="width:100%;border:none;background:transparent;font:600 10px/1.4 var(--font-mono);padding:3px 6px;color:var(--text);text-align:right;outline:none" placeholder="—"></td>`;
+      h+=`<td style="padding:3px 6px;text-align:center">${badge}</td>`;
+    });
+    h+=`</tr>`;
+  });
+  h+=`</tbody>`;
+  tbl.innerHTML=h;
+}
+
+function mbrEdit(inp) {
+  const {mk,v,f}=inp.dataset;
+  if(!mbrData[mbrMonth]) mbrData[mbrMonth]={};
+  if(!mbrData[mbrMonth][mk]) mbrData[mbrMonth][mk]={};
+  if(!mbrData[mbrMonth][mk][v]) mbrData[mbrMonth][mk][v]={};
+  mbrData[mbrMonth][mk][v][f]=inp.value;
+  // Refresh pct badge in same row
+  const td=inp.closest('tr');
+  if(td) renderMBRTable();
+}
+
+function saveMBRData() {
+  localStorage.setItem('ct_mbr_data',JSON.stringify(mbrData));
+  const msg=document.getElementById('mbr-save-msg');
+  if(msg){msg.textContent='✓ Đã lưu';setTimeout(()=>msg.textContent='',2000);}
+}
+
+function resetMBRData() {
+  if(!confirm(`Reset data MBR tháng ${mbrMonth}?`)) return;
+  delete mbrData[mbrMonth];
+  renderMBRTable();
+}
 </script>
 </body>
 </html>
