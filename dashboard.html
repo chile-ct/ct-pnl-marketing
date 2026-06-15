@@ -164,6 +164,7 @@ body{font-family:var(--font-ui);background:var(--bg);color:var(--text);font-size
 .chip.a-growth{background:var(--purple-bg);border-color:var(--purple);color:var(--purple);font-weight:700}
 .chip.a-seo{background:var(--gds-bg);border-color:var(--gds);color:var(--gds);font-weight:700}
 .chip.a-vertical{background:var(--orange-bg);border-color:var(--orange);color:var(--orange);font-weight:700}
+.chip.active{background:var(--navy);border-color:var(--navy);color:#fff;font-weight:700}
 /* ── Funnel diagram ─────────────────────────────── */
 .funnel-block{border-radius:10px;padding:14px 16px;border:1.5px solid}
 .funnel-connector{display:flex;justify-content:center;height:28px;position:relative;margin:0 auto}
@@ -515,6 +516,16 @@ body{font-family:var(--font-ui);background:var(--bg);color:var(--text);font-size
         <div style="font:600 11px/1 var(--font-ui);color:var(--red);margin-top:6px;font-size:10px" id="kpi-ltvcac-flag">△ Below 3.0×</div>
       </div>
     </div>
+    <div style="display:flex;gap:14px;align-items:center;margin-bottom:12px;flex-wrap:wrap">
+      <span style="font:600 11px/1 var(--font-ui);color:var(--navy-60)">Vertical:</span>
+      <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+        <div style="display:flex;gap:5px;align-items:center"><span style="display:inline-block;width:28px;height:2px;background:#888;border-radius:1px"></span><span style="font:500 11px/1 var(--font-ui);color:var(--text-light)">Overall</span></div>
+        <div style="display:flex;gap:5px;align-items:center"><span style="display:inline-block;width:28px;height:2px;background:var(--pty);border-radius:1px"></span><span style="font:500 11px/1 var(--font-ui);color:var(--text-light)">PTY</span></div>
+        <div style="display:flex;gap:5px;align-items:center"><span style="display:inline-block;width:28px;height:2px;background:var(--job);border-radius:1px"></span><span style="font:500 11px/1 var(--font-ui);color:var(--text-light)">JOB</span></div>
+        <div style="display:flex;gap:5px;align-items:center"><span style="display:inline-block;width:28px;height:2px;background:var(--veh);border-radius:1px"></span><span style="font:500 11px/1 var(--font-ui);color:var(--text-light)">VEH</span></div>
+        <div style="display:flex;gap:5px;align-items:center"><span style="display:inline-block;width:28px;height:2px;background:var(--gds);border-radius:1px"></span><span style="font:500 11px/1 var(--font-ui);color:var(--text-light)">GDS</span></div>
+      </div>
+    </div>
     <div class="grid-2 mb-20">
       <div class="chart-card">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
@@ -571,7 +582,8 @@ body{font-family:var(--font-ui);background:var(--bg);color:var(--text);font-size
     </div>
     <div class="card">
       <div class="chart-title mb-4" id="cohort-table-title">Cohort Retention Heatmap — All Chợ Tốt</div>
-      <div style="font:400 11px/1.4 var(--font-ui);color:var(--navy-60);margin-bottom:14px">Source: chotot-dwh.ct_digital.dashboard__retention_90d (new_status='new') · All platforms, all sources</div>
+      <div style="font:400 11px/1.4 var(--font-ui);color:var(--navy-60);margin-bottom:6px">Source: chotot-dwh.ct_digital.dashboard__retention_90d (new_status='new') · All platforms, all sources</div>
+      <div style="font:400 11px/1.5 var(--font-ui);color:var(--text-faint);margin-bottom:14px;padding:6px 10px;background:var(--surface-2);border-radius:6px;border-left:2px solid var(--accent)"><strong style="color:var(--text-dim)">Cách tính:</strong> Mỗi dòng là 1 cohort (tháng gia nhập). <strong style="color:var(--text-dim)">M1%</strong> = % user quay lại tháng tiếp theo, <strong style="color:var(--text-dim)">M2%</strong> = tháng thứ 2, <strong style="color:var(--text-dim)">M3%</strong> = tháng thứ 3. <strong style="color:var(--text-dim)">Lifespan</strong> = 1 + M1% + M2% + M3% (đơn vị: tháng) — đo trung bình user hoạt động bao nhiêu tháng. Lifespan cao → user gắn bó hơn → LTV tốt hơn. ⏳ = chưa đủ thời gian để tính.</div>
       <div style="overflow-x:auto">
         <table class="dt" id="cohort-table">
           <thead><tr>
@@ -1036,33 +1048,35 @@ const FALLBACK_DATA = {
   nurr_d7:[14.5,14.8,15.7,14.9,11.7,0,0,0,0,0,0,0],
   nurr_m1:[6.8,7.0,7.3,7.0,null,null,null,null,null,null,null,null],
   cohort:{
+    // Source: chotot-dwh.ct_digital.mtm_chotot_vertical_channel, SUM(new_dau) by vertical+month
+    // M1/M2/M3 retention per vertical pending separate BQ query
     PTY:[
-      {c:'Jan',M0a:10320,M1:55.4,M1a:5718,M2:51.6,M2a:5330,M3:43.3,M3a:4471},
-      {c:'Feb',M0a:8760, M1:58.7,M1a:5143,M2:49.1,M2a:4298,M3:null,M3a:null},
-      {c:'Mar',M0a:12636,M1:55.4,M1a:7002,M2:null,M2a:null, M3:null,M3a:null},
-      {c:'Apr',M0a:11590,M1:null,M1a:null, M2:null,M2a:null, M3:null,M3a:null},
-      {c:'May',M0a:13053,M1:null,M1a:null, M2:null,M2a:null, M3:null,M3a:null},
+      {c:'Jan',M0a:623029, M1:null,M1a:null,M2:null,M2a:null,M3:null,M3a:null},
+      {c:'Feb',M0a:459620, M1:null,M1a:null,M2:null,M2a:null,M3:null,M3a:null},
+      {c:'Mar',M0a:921431, M1:null,M1a:null,M2:null,M2a:null,M3:null,M3a:null},
+      {c:'Apr',M0a:817567, M1:null,M1a:null,M2:null,M2a:null,M3:null,M3a:null},
+      {c:'May',M0a:907715, M1:null,M1a:null,M2:null,M2a:null,M3:null,M3a:null},
     ],
     JOB:[
-      {c:'Jan',M0a:5836,M1:52.0,M1a:3035,M2:45.2,M2a:2638,M3:38.9,M3a:2270},
-      {c:'Feb',M0a:5040,M1:55.1,M1a:2777,M2:44.8,M2a:2258,M3:null,M3a:null},
-      {c:'Mar',M0a:7234,M1:51.8,M1a:3747,M2:null,M2a:null, M3:null,M3a:null},
-      {c:'Apr',M0a:6398,M1:null,M1a:null, M2:null,M2a:null, M3:null,M3a:null},
-      {c:'May',M0a:8125,M1:null,M1a:null, M2:null,M2a:null, M3:null,M3a:null},
+      {c:'Jan',M0a:265635, M1:null,M1a:null,M2:null,M2a:null,M3:null,M3a:null},
+      {c:'Feb',M0a:276261, M1:null,M1a:null,M2:null,M2a:null,M3:null,M3a:null},
+      {c:'Mar',M0a:605083, M1:null,M1a:null,M2:null,M2a:null,M3:null,M3a:null},
+      {c:'Apr',M0a:420629, M1:null,M1a:null,M2:null,M2a:null,M3:null,M3a:null},
+      {c:'May',M0a:392734, M1:null,M1a:null,M2:null,M2a:null,M3:null,M3a:null},
     ],
     VEH:[
-      {c:'Jan',M0a:9826,M1:64.1,M1a:6298,M2:59.2,M2a:5817,M3:49.8,M3a:4893},
-      {c:'Feb',M0a:8532,M1:66.3,M1a:5656,M2:57.8,M2a:4932,M3:null,M3a:null},
-      {c:'Mar',M0a:12041,M1:63.7,M1a:7670,M2:null,M2a:null,M3:null,M3a:null},
-      {c:'Apr',M0a:10856,M1:null,M1a:null,M2:null,M2a:null,M3:null,M3a:null},
-      {c:'May',M0a:11907,M1:null,M1a:null,M2:null,M2a:null,M3:null,M3a:null},
+      {c:'Jan',M0a:1117439,M1:null,M1a:null,M2:null,M2a:null,M3:null,M3a:null},
+      {c:'Feb',M0a:478654, M1:null,M1a:null,M2:null,M2a:null,M3:null,M3a:null},
+      {c:'Mar',M0a:938121, M1:null,M1a:null,M2:null,M2a:null,M3:null,M3a:null},
+      {c:'Apr',M0a:757720, M1:null,M1a:null,M2:null,M2a:null,M3:null,M3a:null},
+      {c:'May',M0a:725893, M1:null,M1a:null,M2:null,M2a:null,M3:null,M3a:null},
     ],
     GDS:[
-      {c:'Jan',M0a:14582,M1:54.1,M1a:7889,M2:47.6,M2a:6941,M3:40.2,M3a:5862},
-      {c:'Feb',M0a:12853,M1:56.8,M1a:7300,M2:48.3,M2a:6208,M3:null,M3a:null},
-      {c:'Mar',M0a:17834,M1:54.2,M1a:9666,M2:null,M2a:null,M3:null,M3a:null},
-      {c:'Apr',M0a:16121,M1:null,M1a:null,M2:null,M2a:null,M3:null,M3a:null},
-      {c:'May',M0a:18013,M1:null,M1a:null,M2:null,M2a:null,M3:null,M3a:null},
+      {c:'Jan',M0a:1086131,M1:null,M1a:null,M2:null,M2a:null,M3:null,M3a:null},
+      {c:'Feb',M0a:849612, M1:null,M1a:null,M2:null,M2a:null,M3:null,M3a:null},
+      {c:'Mar',M0a:1128360,M1:null,M1a:null,M2:null,M2a:null,M3:null,M3a:null},
+      {c:'Apr',M0a:899589, M1:null,M1a:null,M2:null,M2a:null,M3:null,M3a:null},
+      {c:'May',M0a:953125, M1:null,M1a:null,M2:null,M2a:null,M3:null,M3a:null},
     ],
     // Source: chotot-dwh.ct_digital.dashboard__retention_90d, new_status='new', all platforms
     ALL:[
@@ -1250,13 +1264,25 @@ function renderPL() {
   const merDatasets = [
     {label:'All',data:months.map((_,i)=>totalSpendM(i)>0?totalRevM(i)/totalSpendM(i):null),borderColor:C.all,pointRadius:3,borderWidth:2,tension:.3},
     ...VERTS4.map((v,vi)=>({label:v,data:months.map((_,i)=>{
-      if (v==='VEH'&&(i===0||i===1)) return null; // VEH Jan+Feb excluded (no data)
+      if ((v==='VEH'||v==='GDS')&&(i===0||i===1)) return null; // VEH & GDS Jan+Feb excluded
       const s=d.spend[v]?.[i]||0;return s>0?(d.revenue[v]?.[i]||0)/s:null;}),
       borderColor:COLORS4[vi],pointRadius:3,borderWidth:2,tension:.3}))
   ];
   makeChart('chartMERTrend',{type:'line',data:{labels:months,datasets:merDatasets},options:trendsOpts});
   const romiDatasets = merDatasets.map(ds=>({...ds,data:ds.data.map(v=>v!=null?v-1:null)}));
   makeChart('chartROMITrend',{type:'line',data:{labels:months,datasets:romiDatasets},options:trendsOpts});
+  ['chartMERTrend','chartROMITrend'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(!el) return;
+    const noteId=id+'_note';
+    if(!document.getElementById(noteId)){
+      const note=document.createElement('div');
+      note.id=noteId;
+      note.style.cssText='font:400 10px/1.5 var(--font-ui);color:var(--text-faint);margin-top:4px;padding:4px 8px;background:var(--surface-2);border-radius:4px;border-left:2px solid var(--border)';
+      note.textContent='📌 GDS & VEH tháng 1–2: không ghi nhận do MKT spend không đáng kể, bỏ qua để tránh nhiễu data.';
+      el.closest('[style*="position:relative"]')?.after(note);
+    }
+  });
 
   // P&L detail grid per vertical
   const gridEl = document.getElementById('pl-detail-grid');
@@ -1750,7 +1776,7 @@ function renderUE2() {
   const multiLine = () => ({
     responsive:true,maintainAspectRatio:false,
     interaction:{mode:'index',intersect:false},
-    plugins:{legend:{position:'bottom'}},
+    plugins:{legend:{display:false}},
     scales:{x:{grid:{display:false}},y:{beginAtZero:true,grid:{color:'#E8EDEF'},ticks:{font:{size:11,family:"'Inter',-apple-system,sans-serif"}}}}
   });
 
@@ -1899,12 +1925,7 @@ function renderCohort() {
     if(ls) { totalLS+=ls; lsCount++; }
     const heatClass = v => {
       if(v==null) return '<td class="mono na">⏳</td>';
-      if(v>=7)   return `<td class="cohort-cell h5">${f1(v)}%</td>`;
-      if(v>=6)   return `<td class="cohort-cell h4">${f1(v)}%</td>`;
-      if(v>=5)   return `<td class="cohort-cell h3">${f1(v)}%</td>`;
-      if(v>=4)   return `<td class="cohort-cell h2">${f1(v)}%</td>`;
-      if(v>=3)   return `<td class="cohort-cell h1">${f1(v)}%</td>`;
-      return `<td class="cohort-cell h0">${f1(v)}%</td>`;
+      return `<td class="mono" style="text-align:center">${f1(v)}%</td>`;
     };
     tb.innerHTML += `<tr>
       <td><strong>${r.c}</strong></td>
@@ -2360,8 +2381,8 @@ function renderMktBars(key, type) {
   if(S.charts.has(chartId)){S.charts.get(chartId).destroy();S.charts.delete(chartId);}
   S.charts.set(chartId,new Chart(el.getContext('2d'),{type:'bar',data:{labels,datasets},plugins:[dlPlugin],
     options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
-      layout:{padding:{right:140}},
-      plugins:{legend:{position:'bottom',labels:{font:{size:9},padding:8}},
+      layout:{padding:{right:120}},
+      plugins:{legend:{display:false},
         tooltip:{callbacks:{label:ctx=>{const act=ctx.dataset.actualData?.[ctx.dataIndex];return act!=null?` ${ctx.dataset.label}: ${fmtNum(act)} (${Math.round(ctx.raw)}%)`:` ${ctx.dataset.label}: ${Math.round(ctx.raw)}%`;}}}},
       scales:{
         x:{beginAtZero:true,max:140,grid:{display:false},ticks:{callback:v=>v+'%',font:{size:10}}},
@@ -2477,18 +2498,24 @@ function renderMKTPerf() {
     html+=`
     <div style="margin:28px 0 14px"><div class="section-label">${sm.label}</div></div>
     <div class="card mb-20">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;flex-wrap:wrap">
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;flex:1">
+          <div style="display:flex;gap:6px;align-items:center"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${C.pty}"></span><span style="font:500 11px/1 var(--font-ui);color:var(--text-light)">PTY</span></div>
+          <div style="display:flex;gap:6px;align-items:center"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${C.job}"></span><span style="font:500 11px/1 var(--font-ui);color:var(--text-light)">JOB</span></div>
+          <div style="display:flex;gap:6px;align-items:center"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${C.veh}"></span><span style="font:500 11px/1 var(--font-ui);color:var(--text-light)">VEH</span></div>
+          <div style="display:flex;gap:6px;align-items:center"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${C.gds}"></span><span style="font:500 11px/1 var(--font-ui);color:var(--text-light)">GDS</span></div>
+        </div>
         <span style="font:600 11px/1 var(--font-ui);color:var(--navy-60)">Tháng:</span>
         <div class="chip-group" id="monthChip_${sm.key}">
           ${MONTHS.slice(0,ACT).map((m,i)=>`<div class="chip${i===ACT-1?' active':''}" data-mk="${sm.key}" data-mi="${i}" onclick="setMktMonth(this,'${sm.key}')">${m}</div>`).join('')}
         </div>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
-        <div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+        <div style="min-width:0;overflow:hidden">
           <div class="chart-title mb-2">Input metrics</div>
           <div style="position:relative"><canvas id="chartMKT_${sm.key}_input"></canvas></div>
         </div>
-        <div>
+        <div style="min-width:0;overflow:hidden">
           <div class="chart-title mb-2">▸ Output metrics</div>
           <div style="position:relative"><canvas id="chartMKT_${sm.key}_output"></canvas></div>
         </div>
@@ -2539,7 +2566,7 @@ function renderCostTable() {
     const clr = COST_VERT_COLORS[v];
     html += `<tr>
       <td class="row-label" style="color:${clr}">${v}</td>
-      ${editCost[v].map((val)=>`<td style="color:var(--text)">${fmtVND(val)}</td>`).join('')}
+      ${editCost[v].map((val)=>`<td style="color:var(--text);font-size:10px;white-space:nowrap">${fmtVND(val)}</td>`).join('')}
     </tr>`;
   });
   const totals = Array(12).fill(0).map((_,mi)=>COST_VERTS.reduce((s,v)=>(editCost[v][mi]||0)+s,0));
