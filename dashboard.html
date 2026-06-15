@@ -567,11 +567,11 @@ body{font-family:var(--font-ui);background:var(--bg);color:var(--text);font-size
     </div>
     <div class="grid-2 mb-20">
       <div class="chart-card"><div class="chart-title">Cohort Retention — M1/M2/M3 (%)</div><div class="chart-wrap-lg"><canvas id="chartCohort"></canvas></div></div>
-      <div class="chart-card"><div class="chart-title">Cohort Size (M0a) — New Users per Month</div><div class="chart-wrap-lg"><canvas id="chartCohortSize"></canvas></div></div>
+      <div class="chart-card"><div class="chart-title">Cohort Size — New Users per Month (All CT, All Platforms)</div><div class="chart-wrap-lg"><canvas id="chartCohortSize"></canvas></div></div>
     </div>
     <div class="card">
       <div class="chart-title mb-4" id="cohort-table-title">Cohort Retention Heatmap — All Chợ Tốt</div>
-      <div style="font:400 11px/1.4 var(--font-ui);color:var(--navy-60);margin-bottom:14px">Source: ct_digital.dashboard__retention_mapping_activation_by_source_campaign · All channels, all platforms</div>
+      <div style="font:400 11px/1.4 var(--font-ui);color:var(--navy-60);margin-bottom:14px">Source: chotot-dwh.ct_digital.dashboard__retention_90d (new_status='new') · All platforms, all sources</div>
       <div style="overflow-x:auto">
         <table class="dt" id="cohort-table">
           <thead><tr>
@@ -1064,12 +1064,13 @@ const FALLBACK_DATA = {
       {c:'Apr',M0a:16121,M1:null,M1a:null,M2:null,M2a:null,M3:null,M3a:null},
       {c:'May',M0a:18013,M1:null,M1a:null,M2:null,M2a:null,M3:null,M3a:null},
     ],
+    // Source: chotot-dwh.ct_digital.dashboard__retention_90d, new_status='new', all platforms
     ALL:[
-      {c:'Jan',M0a:24291,M1:56.6,M1a:13741,M2:50.7,M2a:12304,M3:43.7,M3a:10622},
-      {c:'Feb',M0a:21238,M1:59.1,M1a:12552,M2:49.8,M2a:10576,M3:null,M3a:null},
-      {c:'Mar',M0a:29847,M1:56.0,M1a:16714,M2:null,M2a:null, M3:null,M3a:null},
-      {c:'Apr',M0a:26872,M1:null,M1a:null, M2:null,M2a:null, M3:null,M3a:null},
-      {c:'May',M0a:32145,M1:null,M1a:null, M2:null,M2a:null, M3:null,M3a:null},
+      {c:'Jan',M0a:3970641,M1:4.76,M1a:188922,M2:3.54,M2a:140561,M3:2.58,M3a:102443},
+      {c:'Feb',M0a:2651062,M1:6.95,M1a:184249,M2:4.32,M2a:114526,M3:3.16,M3a:83774},
+      {c:'Mar',M0a:4636919,M1:5.52,M1a:256118,M2:3.56,M2a:165075,M3:null,M3a:null},
+      {c:'Apr',M0a:3785223,M1:5.83,M1a:220680,M2:null,M2a:null,   M3:null,M3a:null},
+      {c:'May',M0a:3664105,M1:null,M1a:null,  M2:null,M2a:null,   M3:null,M3a:null},
     ],
   },
 };
@@ -1880,13 +1881,14 @@ function renderCohort() {
     ]
   },options:lineOpts(false)});
 
+  const m0InM = rows.map(r=>r.M0a!=null ? +(r.M0a/1e6).toFixed(2) : null);
   makeChart('chartCohortSize',{type:'bar',data:{
     labels,
-    datasets:[{label:'M0a (New Users)',data:rows.map(r=>r.M0a),backgroundColor:C.yellow+'BB',borderColor:C.yellow,borderWidth:1}]
-  },options:barOpts()});
+    datasets:[{label:'New Users (M)',data:m0InM,backgroundColor:C.yellow+'BB',borderColor:C.yellow,borderWidth:1}]
+  },options:{...barOpts(),scales:{...barOpts().scales,y:{...barOpts().scales?.y,beginAtZero:true,ticks:{callback:v=>v+'M'}}}}});
 
   document.getElementById('cohort-table-title').textContent =
-    `Cohort Retention — ${cohortVert==='ALL'?'All Chợ Tốt':cohortVert} (MKT-Attributed New Users)`;
+    `Cohort Retention — ${cohortVert==='ALL'?'All Chợ Tốt':cohortVert}`;
 
   const tb = document.getElementById('cohort-tbody');
   tb.innerHTML = '';
@@ -1897,11 +1899,11 @@ function renderCohort() {
     if(ls) { totalLS+=ls; lsCount++; }
     const heatClass = v => {
       if(v==null) return '<td class="mono na">⏳</td>';
-      if(v>=65) return `<td class="cohort-cell h5">${f1(v)}%</td>`;
-      if(v>=60) return `<td class="cohort-cell h4">${f1(v)}%</td>`;
-      if(v>=55) return `<td class="cohort-cell h3">${f1(v)}%</td>`;
-      if(v>=50) return `<td class="cohort-cell h2">${f1(v)}%</td>`;
-      if(v>=40) return `<td class="cohort-cell h1">${f1(v)}%</td>`;
+      if(v>=7)   return `<td class="cohort-cell h5">${f1(v)}%</td>`;
+      if(v>=6)   return `<td class="cohort-cell h4">${f1(v)}%</td>`;
+      if(v>=5)   return `<td class="cohort-cell h3">${f1(v)}%</td>`;
+      if(v>=4)   return `<td class="cohort-cell h2">${f1(v)}%</td>`;
+      if(v>=3)   return `<td class="cohort-cell h1">${f1(v)}%</td>`;
       return `<td class="cohort-cell h0">${f1(v)}%</td>`;
     };
     tb.innerHTML += `<tr>
