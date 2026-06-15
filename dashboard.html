@@ -492,12 +492,6 @@ body{font-family:var(--font-ui);background:var(--bg);color:var(--text);font-size
         <div style="font:400 11px/1.5 var(--font-ui);color:var(--navy-60);margin-top:4px;font-size:10px">Higher = more monetisation per lead</div>
       </div>
       <div class="kpi-card">
-        <div class="kpi-label">Leads / User</div>
-        <div style="font:400 11px/1.4 var(--font-ui);color:var(--navy-60);margin-bottom:6px">Avg leads per vMAU</div>
-        <div class="kpi-md" id="kpi-lpu" style="color:var(--purple)">—</div>
-        <div style="font:400 11px/1.5 var(--font-ui);color:var(--navy-60);margin-top:4px;font-size:10px">User engagement depth</div>
-      </div>
-      <div class="kpi-card">
         <div class="kpi-label">LTV Segment</div>
         <div style="font:400 11px/1.4 var(--font-ui);color:var(--navy-60);margin-bottom:6px">Expected revenue per acquired user</div>
         <div class="kpi-md" id="kpi-ltv2" style="color:var(--veh)">—</div>
@@ -579,15 +573,13 @@ body{font-family:var(--font-ui);background:var(--bg);color:var(--text);font-size
         <button class="chip" data-v="GDS" onclick="setCohortVert('GDS',this)" style="color:var(--gds)">GDS</button>
       </div>
     </div>
-    <div class="grid-2 mb-20">
-      <div class="chart-card">
-        <div class="chart-title mb-4">Cohort Retention D1 / D7 / D30</div>
-        <div style="font:400 11px/1.4 var(--font-ui);color:var(--navy-60);margin-bottom:6px">% new users returning on Day 1, Day 7, Day 30. <strong>D30 ≈ M1</strong> (same metric, different time unit).</div>
-        <div class="chart-wrap-lg"><canvas id="chartCohortNURR"></canvas></div>
-      </div>
-      <div class="chart-card"><div class="chart-title mb-4">Cohort Size — New Users per Month</div><div style="font:400 11px/1.4 var(--font-ui);color:var(--navy-60);margin-bottom:6px">All platforms, all sources. ALL CT = tổng toàn sàn.</div><div class="chart-wrap-lg"><canvas id="chartCohortSize"></canvas></div></div>
+    <div class="chart-card mb-20">
+      <div class="chart-title mb-4">Cohort Retention D1 / D7 / D30</div>
+      <div style="font:400 11px/1.4 var(--font-ui);color:var(--navy-60);margin-bottom:6px">% new users returning on Day 1, Day 7, Day 30. <strong>D30 ≈ M1</strong> (same metric, different time unit).</div>
+      <div class="chart-wrap-lg"><canvas id="chartCohortNURR"></canvas></div>
     </div>
     <div class="grid-2 mb-20">
+      <div class="chart-card"><div class="chart-title mb-4">Cohort Size — New Users per Month</div><div style="font:400 11px/1.4 var(--font-ui);color:var(--navy-60);margin-bottom:6px">All platforms, all sources. ALL CT = tổng toàn sàn.</div><div class="chart-wrap-lg"><canvas id="chartCohortSize"></canvas></div></div>
       <div class="chart-card"><div class="chart-title mb-4">Cohort Retention — M1/M2/M3 (%)</div><div style="font:400 11px/1.4 var(--font-ui);color:var(--navy-60);margin-bottom:6px">Monthly retention: % users returning each subsequent month.</div><div class="chart-wrap-lg"><canvas id="chartCohort"></canvas></div></div>
     </div>
     <div class="card">
@@ -1312,45 +1304,38 @@ function renderPL() {
     }
   });
 
-  // P&L detail — unified single table, grouped by vertical
+  // P&L detail — transposed: rows=metrics per vertical, cols=months
   const gridEl = document.getElementById('pl-detail-grid');
   const showVerts = plVert==='ALL' ? ['ALL',...VERTS4] : [plVert];
   const VERT_CLR = {ALL:C.all,PTY:C.pty,JOB:C.job,VEH:C.veh,GDS:C.gds};
   gridEl.style.gridTemplateColumns = '1fr';
-  function momCell2(cur,prev) {
-    const p = prev>0 ? (cur-prev)/prev*100 : null;
-    if(p==null) return '';
-    const w = Math.abs(p)>=5 ? 'font-weight:700;' : '';
-    return `<span style="${w}color:${p>=0?'#00843D':'#C62828'}">${p>=0?'+':''}${p.toFixed(1)}%</span>`;
-  }
-  const thSt = 'padding:5px 8px;font:600 10px/1 var(--font-ui);color:var(--navy-60);white-space:nowrap;border-bottom:2px solid var(--border)';
-  const tdSt = (align='right',extra='') => `text-align:${align};font:400 10px/1.4 var(--font-ui);padding:3px 8px;white-space:nowrap;${extra}`;
-  let tbl = `<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:10px">
+  const thT = 'padding:5px 8px;font:600 10px/1 var(--font-ui);color:var(--navy-60);white-space:nowrap;border-bottom:2px solid var(--border)';
+  const tdT = 'text-align:right;font:400 10px/1.4 var(--font-mono);padding:3px 8px;white-space:nowrap';
+  let tbl = `<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse">
     <thead><tr style="background:var(--surface-2)">
-      <th style="${thSt};text-align:left">Vertical</th>
-      <th style="${thSt};text-align:left">Month</th>
-      <th style="${thSt}">Revenue</th>
-      <th style="${thSt}">Spend</th>
-      <th style="${thSt}">MER</th>
-      <th style="${thSt}">Rev MoM</th>
+      <th style="${thT};text-align:left;min-width:55px">Vertical</th>
+      <th style="${thT};text-align:left;min-width:75px">Metric</th>
+      ${months.map(m=>`<th style="${thT}">${m}</th>`).join('')}
     </tr></thead><tbody>`;
   showVerts.forEach((v,vi)=>{
     const rArr = v==='ALL' ? months.map((_,i)=>totalRevM(i)) : revArr(v);
     const sArr = v==='ALL' ? months.map((_,i)=>totalSpendM(i)) : spendArr(v);
     const clr = VERT_CLR[v]||C.all;
-    rArr.forEach((r,i)=>{
-      const s=sArr[i], mer2=s>0?r/s:0;
-      const bg = vi%2===0?'':'background:var(--surface-2)';
-      tbl += `<tr style="${bg}">
-        ${i===0?`<td rowspan="${rArr.length}" style="font:700 10px/1.4 var(--font-ui);padding:4px 8px;color:${clr};border-right:2px solid ${clr}33;vertical-align:middle;text-align:center">${v}</td>`:''}
-        <td style="${tdSt('left')}font-weight:600">${months[i]}</td>
-        <td style="${tdSt()}">${r.toFixed(2)}B</td>
-        <td style="${tdSt()}">${s.toFixed(3)}B</td>
-        <td style="${tdSt()}color:${mer2>=10?'#00843D':C.navy};font-weight:600">${f1(mer2)}×</td>
-        <td style="${tdSt()}">${i>0?momCell2(r,rArr[i-1]):''}</td>
+    const bg = vi%2===0?'':'background:rgba(0,0,0,.018)';
+    const topBorder = vi>0?'border-top:2px solid var(--border)':'';
+    const metricRows = [
+      {label:'Revenue', vals:rArr, fmt:(r)=>`${r.toFixed(2)}B`},
+      {label:'Spend',   vals:sArr, fmt:(s)=>`${s.toFixed(3)}B`},
+      {label:'MER',     vals:rArr, fmt:(r,i)=>{const s=sArr[i];return s>0?`<span style="color:${r/s>=10?'#00843D':C.navy};font-weight:600">${f1(r/s)}×</span>`:'—';}},
+      {label:'Rev MoM', vals:rArr, fmt:(r,i)=>{if(i===0) return '';const p=(r-rArr[i-1])/(rArr[i-1]||1)*100;const w=Math.abs(p)>=5?'font-weight:700;':'';return `<span style="${w}color:${p>=0?'#00843D':'#C62828'}">${p>=0?'+':''}${p.toFixed(1)}%</span>`;}},
+    ];
+    metricRows.forEach((mr,mri)=>{
+      tbl+=`<tr style="${bg}">
+        ${mri===0?`<td rowspan="4" style="font:700 10px/1.4 var(--font-ui);padding:4px 8px;color:${clr};border-right:2px solid ${clr}33;vertical-align:middle;text-align:center;${topBorder}">${v}</td>`:''}
+        <td style="font:500 10px/1.4 var(--font-ui);padding:3px 8px;color:var(--text-light);white-space:nowrap;${mri===0?topBorder:''}">${mr.label}</td>
+        ${mr.vals.map((val,i)=>`<td style="${tdT}">${mr.fmt(val,i)}</td>`).join('')}
       </tr>`;
     });
-    if(vi<showVerts.length-1) tbl+=`<tr><td colspan="6" style="height:4px;background:var(--border)"></td></tr>`;
   });
   tbl += '</tbody></table></div>';
   gridEl.innerHTML = tbl;
@@ -1783,7 +1768,6 @@ function renderUE2() {
 
   const li = ACT-1; // last month index
   document.getElementById('kpi-vpl').textContent   = fVND(vpl[li]);
-  document.getElementById('kpi-lpu').textContent   = lpu[li]!=null  ? lpu[li].toFixed(4)    : '—';
   document.getElementById('kpi-ltv2').textContent  = fVND(ltv[li]);
   document.getElementById('kpi-cac2').textContent  = fVND(cac[li]);
   const lvc = overallLvc[li];
@@ -1820,21 +1804,16 @@ function renderUE2() {
   ];
   const VL = {ALL:'Overall',...Object.fromEntries(VERTS4.map(v=>[v,v]))};
   const allKeys = ['ALL',...VERTS4];
-  const monHdr = months.map((m,i)=>i>0?`<th class="r" colspan="2">${m}</th>`:`<th class="r" colspan="1">${m}</th>`).join('');
-  const monHdr2 = months.map((m,i)=>i>0?`<th class="r">Val</th><th class="r" style="color:var(--text-faint)">MoM</th>`:`<th class="r">Val</th>`).join('');
-  let dtHtml = `<table class="dt" style="font-size:10px;min-width:600px"><thead>
-    <tr><th rowspan="2" style="min-width:70px">Metric</th><th rowspan="2">Vertical</th>${monHdr}</tr>
-    <tr>${monHdr2}</tr></thead><tbody>`;
+  const monHdr = months.map(m=>`<th class="r">${m}</th>`).join('');
+  let dtHtml = `<table class="dt" style="font-size:10px;min-width:500px"><thead>
+    <tr><th style="min-width:80px">Metric</th><th style="min-width:60px">Vertical</th>${monHdr}</tr>
+    </thead><tbody>`;
   METRICS.forEach(({key,label,fmt},mki)=>{
     allKeys.forEach((vk,vki)=>{
-      const arr = vk==='ALL' ? overall[key==='vpl'?'vpl':key==='cac'?'cac':key==='ltv'?'ltv':'lvc'] : vertLine(vk)[key];
+      const arr = vk==='ALL' ? overall[key] : vertLine(vk)[key];
       const bg = mki%2===0?'':'background:var(--surface-2)';
       const vcl = vk==='ALL'?'color:var(--text-dim);font-weight:700':`color:${COLORS4[VERTS4.indexOf(vk)]}`;
-      const cells = arr.map((val,i)=>{
-        const mom = i>0?momDelta2(arr[i],arr[i-1]):null;
-        const momStr = mom!=null?`<span style="color:${mom>=0?'#00843D':'#C62828'}">${mom>=0?'+':''}${mom.toFixed(0)}%</span>`:'';
-        return i>0?`<td class="mono r">${fmt(val)}</td><td class="mono r">${momStr}</td>`:`<td class="mono r">${fmt(val)}</td>`;
-      }).join('');
+      const cells = arr.map(val=>`<td class="mono r">${fmt(val)}</td>`).join('');
       dtHtml+=`<tr style="${bg}"><td style="${vki===0?'font-weight:600':'padding-left:10px'}">${vki===0?label:''}</td><td style="${vcl}">${VL[vk]}</td>${cells}</tr>`;
     });
   });
@@ -1963,14 +1942,26 @@ function renderCohort() {
   const rows = d.cohort[cohortVert] || [];
   const labels = rows.map(r=>r.c);
 
+  const cohortDLPlugin = {id:'cohortDL',afterDatasetsDraw(chart){
+    const {ctx}=chart;
+    chart.data.datasets.forEach(ds=>{
+      const meta=chart.getDatasetMeta(chart.data.datasets.indexOf(ds));
+      meta.data.forEach((pt,i)=>{
+        const v=ds.data[i]; if(v==null) return;
+        ctx.save();ctx.fillStyle=ds.borderColor;ctx.font='700 9px Inter,sans-serif';
+        ctx.textAlign='center';ctx.textBaseline='bottom';
+        ctx.fillText(f1(v)+'%',pt.x,pt.y-4);ctx.restore();
+      });
+    });
+  }};
   makeChart('chartCohort',{type:'line',data:{
     labels,
     datasets:[
-      {label:'M1 (%)',data:rows.map(r=>r.M1),borderColor:C.veh,borderWidth:2,spanGaps:false},
-      {label:'M2 (%)',data:rows.map(r=>r.M2),borderColor:C.gds,borderWidth:2,spanGaps:false},
-      {label:'M3 (%)',data:rows.map(r=>r.M3),borderColor:C.pty,borderWidth:2,spanGaps:false},
+      {label:'M1 (%)',data:rows.map(r=>r.M1),borderColor:C.veh,borderWidth:2,pointRadius:4,spanGaps:false},
+      {label:'M2 (%)',data:rows.map(r=>r.M2),borderColor:C.gds,borderWidth:2,pointRadius:4,spanGaps:false},
+      {label:'M3 (%)',data:rows.map(r=>r.M3),borderColor:C.pty,borderWidth:2,pointRadius:4,spanGaps:false},
     ]
-  },options:lineOpts(false)});
+  },plugins:[cohortDLPlugin],options:{...lineOpts(false),layout:{padding:{top:20}}}});
 
   const fmtM = v => v==null?null:+(v/1e6).toFixed(3);
   const sizeOpts = {...lineOpts(true), scales:{
@@ -1990,7 +1981,9 @@ function renderCohort() {
   } else {
     sizeDatasets=[{label:cohortVert,data:rows.map(r=>fmtM(r.M0a)),borderColor:C[cohortVert.toLowerCase()]||C.navy,borderWidth:2.5,pointRadius:4,tension:.3,fill:false}];
   }
-  makeChart('chartCohortSize',{type:'line',data:{labels,datasets:sizeDatasets},options:{...sizeOpts,plugins:{legend:{position:'bottom',labels:{font:{size:10},padding:8}}}}});
+  makeChart('chartCohortSize',{type:'line',data:{labels,datasets:sizeDatasets},options:{...sizeOpts,
+    plugins:{legend:{position:'bottom',labels:{font:{size:10},padding:8}},
+      tooltip:{callbacks:{label:ctx=>{const v=ctx.raw;if(v==null)return '';const lbl=v>=1?f1(v)+'M users':Math.round(v*1000)+'K users';return `${ctx.dataset.label}: ${lbl}`;}}}}}});
 
   // D1/D7/D30 retention chart
   makeChart('chartCohortNURR',{type:'line',data:{
@@ -2934,37 +2927,38 @@ function mbrPct(mk,v) {
 
 function renderMBRTable() {
   const tbl=document.getElementById('mbr-table'); if(!tbl) return;
-  const vCols = MBR_VERTS;
-  const thB='font:700 10px/1 var(--font-ui);padding:5px 6px;white-space:nowrap;border-bottom:2px solid var(--border);text-align:center';
+  const vCols=MBR_VERTS;
+  const thB='font:700 10px/1 var(--font-ui);padding:5px 8px;white-space:nowrap;border-bottom:2px solid var(--border);text-align:center';
   let h=`<thead><tr style="background:var(--surface-2)">
-    <th style="${thB};text-align:left;min-width:130px">Section / Metric</th>`;
+    <th style="${thB};text-align:left;min-width:90px;border-right:1px solid var(--border)">Section</th>
+    <th style="${thB};text-align:left;min-width:150px">Metric</th>`;
   vCols.forEach(v=>{
     const clr=MBR_VCOLS[v];
-    h+=`<th colspan="3" style="${thB};color:${clr};border-left:2px solid ${clr}33">${v}</th>`;
+    h+=`<th colspan="2" style="${thB};color:${clr};border-left:2px solid ${clr}44">${v}</th>`;
   });
-  h+=`</tr><tr style="background:var(--surface-2)"><th></th>`;
+  h+=`</tr><tr style="background:var(--surface-2)">
+    <th style="border-right:1px solid var(--border)"></th><th></th>`;
   vCols.forEach(()=>{
-    h+=`<th style="${thB};color:var(--text-faint)">Target/LM</th><th style="${thB};color:var(--text-faint)">Actual</th><th style="${thB};color:var(--text-faint)">%</th>`;
+    h+=`<th style="${thB};font-weight:400;color:var(--text-faint)">Target/LM</th><th style="${thB};font-weight:400;color:var(--text-faint)">Actual</th>`;
   });
   h+=`</tr></thead><tbody>`;
-  let lastS='';
-  MBR_METRICS.forEach((m,mi)=>{
-    if(m.s!==lastS){
-      lastS=m.s;
-      h+=`<tr style="background:var(--navy-10)"><td colspan="${1+vCols.length*3}" style="font:700 11px/1.6 var(--font-ui);padding:5px 10px;color:var(--navy)">${m.s}</td></tr>`;
-    }
-    const bg=mi%2===0?'':'background:var(--surface-2)';
-    h+=`<tr style="${bg}"><td style="font:500 10px/1.4 var(--font-ui);padding:3px 10px;color:var(--text-light);white-space:nowrap">${m.label}</td>`;
-    vCols.forEach(v=>{
-      const clr=MBR_VCOLS[v];
-      const pct=mbrPct(m.key,v);
-      let badge='';
-      if(pct!=null){const bg2=pct>=100?'var(--green-bg)':pct>=80?'var(--orange-bg)':'var(--red-bg)';const fg=pct>=100?'#00843D':pct>=80?'var(--orange)':'var(--red)';badge=`<span style="padding:1px 4px;border-radius:3px;font:700 9px/1.4 var(--font-ui);background:${bg2};color:${fg}">${Math.round(pct)}%</span>`;}
-      h+=`<td style="border-left:2px solid ${clr}22;padding:0"><input data-mk="${m.key}" data-v="${v}" data-f="target" type="text" value="${mbrGet(m.key,v,'target')}" onchange="mbrEdit(this)" style="width:100%;border:none;background:transparent;font:400 10px/1.4 var(--font-mono);padding:3px 6px;color:var(--text-light);text-align:right;outline:none" placeholder="—"></td>`;
-      h+=`<td style="padding:0"><input data-mk="${m.key}" data-v="${v}" data-f="actual" type="text" value="${mbrGet(m.key,v,'actual')}" onchange="mbrEdit(this)" style="width:100%;border:none;background:transparent;font:600 10px/1.4 var(--font-mono);padding:3px 6px;color:var(--text);text-align:right;outline:none" placeholder="—"></td>`;
-      h+=`<td style="padding:3px 6px;text-align:center">${badge}</td>`;
+  const sections=[...new Set(MBR_METRICS.map(m=>m.s))];
+  sections.forEach((sec,si)=>{
+    const metrics=MBR_METRICS.filter(m=>m.s===sec);
+    metrics.forEach((m,mi)=>{
+      const topBorder=si>0&&mi===0?'border-top:2px solid var(--border);':'';
+      const bg=si%2===0?'':'background:rgba(0,0,0,.02)';
+      h+=`<tr style="${bg}">`;
+      if(mi===0) h+=`<td rowspan="${metrics.length}" style="font:600 10px/1.4 var(--font-ui);padding:4px 8px;color:var(--navy-60);border-right:1px solid var(--border);vertical-align:middle;white-space:nowrap;${topBorder}">${sec}</td>`;
+      h+=`<td style="font:500 10px/1.4 var(--font-ui);padding:3px 8px;color:var(--text-light);white-space:nowrap;${mi===0?topBorder:''}">${m.label}</td>`;
+      vCols.forEach(v=>{
+        const clr=MBR_VCOLS[v];
+        const inSt=`width:70px;border:none;background:transparent;font:400 10px/1.4 var(--font-mono);padding:3px 6px;text-align:right;outline:none;color:`;
+        h+=`<td style="border-left:2px solid ${clr}33;padding:0"><input data-mk="${m.key}" data-v="${v}" data-f="target" type="text" value="${mbrGet(m.key,v,'target')}" onchange="mbrEdit(this)" style="${inSt}var(--text-light)" placeholder="—"></td>`;
+        h+=`<td style="padding:0"><input data-mk="${m.key}" data-v="${v}" data-f="actual" type="text" value="${mbrGet(m.key,v,'actual')}" onchange="mbrEdit(this)" style="${inSt}var(--text)" placeholder="—"></td>`;
+      });
+      h+=`</tr>`;
     });
-    h+=`</tr>`;
   });
   h+=`</tbody>`;
   tbl.innerHTML=h;
