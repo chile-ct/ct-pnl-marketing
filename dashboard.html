@@ -2984,7 +2984,7 @@ function handleMBRPaste(e) {
     if (!cols.some(c=>c.trim())) return; // skip blank rows
     // Skip section header rows
     const first = cols[0].trim().toLowerCase();
-    if (secNames.some(s=>first.startsWith(s.split(' ')[0]))) return;
+    if (secNames.includes(first)) return;
     // If first cell is a non-numeric label (metric name), skip it
     const valueStart = (cols.length>1 && isNaN(parseFloat(cols[0].replace(/,/g,'').trim())) && cols[0].trim()) ? 1 : 0;
 
