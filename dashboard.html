@@ -2884,9 +2884,6 @@ function loadMBRData() {
   try { const s=localStorage.getItem('ct_mbr_data'); if(s) mbrData=JSON.parse(s); } catch(e) {}
   renderMBRMonthFilter();
   renderMBRTable();
-  // Attach paste handler once on the wrapper (survives table rebuild)
-  const wrap = document.getElementById('mbr-table')?.parentElement;
-  if (wrap) wrap.addEventListener('paste', handleMBRPaste);
 }
 
 function renderMBRMonthFilter() {
@@ -2952,8 +2949,8 @@ function renderMBRTable() {
       vCols.forEach(v=>{
         const clr=MBR_VCOLS[v];
         const inSt=`width:100%;box-sizing:border-box;border:none;background:transparent;font:400 10px/1.3 var(--font-mono);padding:2px 4px;text-align:right;outline:none;`;
-        h+=`<td style="border-left:2px solid ${clr}33;padding:0;overflow:hidden"><input data-mk="${m.key}" data-v="${v}" data-f="target" type="text" value="${mbrGet(m.key,v,'target')}" onchange="mbrEdit(this)" style="${inSt}color:var(--navy-60)" placeholder="—"></td>`;
-        h+=`<td style="padding:0;overflow:hidden"><input data-mk="${m.key}" data-v="${v}" data-f="actual" type="text" value="${mbrGet(m.key,v,'actual')}" onchange="mbrEdit(this)" style="${inSt}color:var(--text)" placeholder="—"></td>`;
+        h+=`<td style="border-left:2px solid ${clr}33;padding:0;overflow:hidden"><input data-mk="${m.key}" data-v="${v}" data-f="target" type="text" value="${mbrGet(m.key,v,'target')}" onchange="mbrEdit(this)" onpaste="handleMBRPaste(event)" style="${inSt}color:var(--navy-60)" placeholder="—"></td>`;
+        h+=`<td style="padding:0;overflow:hidden"><input data-mk="${m.key}" data-v="${v}" data-f="actual" type="text" value="${mbrGet(m.key,v,'actual')}" onchange="mbrEdit(this)" onpaste="handleMBRPaste(event)" style="${inSt}color:var(--text)" placeholder="—"></td>`;
       });
       h+=`</tr>`;
     });
@@ -2966,7 +2963,7 @@ function renderMBRTable() {
 }
 
 function handleMBRPaste(e) {
-  const activeEl = document.activeElement;
+  const activeEl = e.target;
   if (!activeEl || !activeEl.dataset.mk) return;
   e.preventDefault();
   const tsv = (e.clipboardData||window.clipboardData).getData('text');
