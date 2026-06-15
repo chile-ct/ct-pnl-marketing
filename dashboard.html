@@ -2884,6 +2884,9 @@ function loadMBRData() {
   try { const s=localStorage.getItem('ct_mbr_data'); if(s) mbrData=JSON.parse(s); } catch(e) {}
   renderMBRMonthFilter();
   renderMBRTable();
+  // Attach paste handler once on the wrapper (survives table rebuild)
+  const wrap = document.getElementById('mbr-table')?.parentElement;
+  if (wrap) wrap.addEventListener('paste', handleMBRPaste);
 }
 
 function renderMBRMonthFilter() {
@@ -2960,6 +2963,56 @@ function renderMBRTable() {
   tbl.style.width='100%';
   tbl.style.borderCollapse='collapse';
   tbl.innerHTML=h;
+}
+
+function handleMBRPaste(e) {
+  const activeEl = document.activeElement;
+  if (!activeEl || !activeEl.dataset.mk) return;
+  e.preventDefault();
+  const tsv = (e.clipboardData||window.clipboardData).getData('text');
+  const rows = tsv.trim().split(/\r?\n/).map(r=>r.split('\t'));
+  if (!rows.length) return;
+
+  // Start position from focused input
+  const startMI = MBR_METRICS.findIndex(m=>m.key===activeEl.dataset.mk);
+  const startVI = MBR_VERTS.indexOf(activeEl.dataset.v);
+  const startFI = activeEl.dataset.f==='actual' ? 1 : 0;
+  const startCol = (startVI<0?0:startVI)*2 + startFI;
+
+  // Section names to skip (strip emoji prefix)
+  const secNames = [...new Set(MBR_METRICS.map(m=>m.s.replace(/^\S+\s/,'').toLowerCase()))];
+
+  let mri = 0;
+  rows.forEach(cols=>{
+    if (!cols.some(c=>c.trim())) return; // skip blank rows
+    // Skip section header rows
+    const first = cols[0].trim().toLowerCase();
+    if (secNames.some(s=>first.startsWith(s.split(' ')[0]))) return;
+    // If first cell is a non-numeric label (metric name), skip it
+    const valueStart = (cols.length>1 && isNaN(parseFloat(cols[0].replace(/,/g,'').trim())) && cols[0].trim()) ? 1 : 0;
+
+    const mi = (startMI<0?0:startMI) + mri;
+    if (mi >= MBR_METRICS.length) return;
+    const m = MBR_METRICS[mi];
+    if (!mbrData[mbrMonth]) mbrData[mbrMonth]={};
+    if (!mbrData[mbrMonth][m.key]) mbrData[mbrMonth][m.key]={};
+
+    cols.slice(valueStart).forEach((val,ci)=>{
+      const col = startCol + ci;
+      const vi = Math.floor(col/2), fi = col%2;
+      if (vi >= MBR_VERTS.length) return;
+      const v = MBR_VERTS[vi], field = fi===0?'target':'actual';
+      if (!mbrData[mbrMonth][m.key][v]) mbrData[mbrMonth][m.key][v]={};
+      const cleaned = val.trim().replace(/,/g,'');
+      if (cleaned !== '') mbrData[mbrMonth][m.key][v][field] = cleaned;
+    });
+    mri++;
+  });
+  renderMBRTable();
+  // Auto-save after paste
+  localStorage.setItem('ct_mbr_data', JSON.stringify(mbrData));
+  const msg=document.getElementById('mbr-save-msg');
+  if(msg){msg.textContent='✓ Đã paste & lưu';setTimeout(()=>msg.textContent='',2500);}
 }
 
 function mbrEdit(inp) {
