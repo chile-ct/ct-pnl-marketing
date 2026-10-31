@@ -1,7 +1,7 @@
 {
   "meta": {
-    "last_updated": "2026-10-30T16:45:07.199301+07:00",
-    "last_updated_display": "30 Oct 2026, 16:45 ICT",
+    "last_updated": "2026-10-31T16:24:30.071149+07:00",
+    "last_updated_display": "31 Oct 2026, 16:24 ICT",
     "source": "BigQuery + Google Sheets via GitHub Actions"
   },
   "months": [
